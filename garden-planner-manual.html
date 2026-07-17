@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garden Planner & Tracker — User Manual</title>
+<style>
+  :root{
+    --bg:#f7f9f3;
+    --surface:#ffffff;
+    --border:#e0e6d8;
+    --ink:#24301f;
+    --muted:#74806c;
+    --accent:#4c7a3f;
+    --accent-soft:#e7f0e0;
+    --tip:#c98a2c;
+    --tip-soft:#fbf1dc;
+    --tip-border:#ecd7a8;
+    --code-bg:#eef2e6;
+    --shadow: 0 1px 2px rgba(30,40,20,.04), 0 8px 24px rgba(30,40,20,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#10140d; --surface:#171d13; --border:#2a331f; --ink:#eaf1e2; --muted:#93a186;
+      --accent:#8fc36a; --accent-soft:#223018; --tip:#e0a94a; --tip-soft:#2a2313; --tip-border:#453a1c;
+      --code-bg:#1c2416; --shadow:none;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#10140d; --surface:#171d13; --border:#2a331f; --ink:#eaf1e2; --muted:#93a186;
+    --accent:#8fc36a; --accent-soft:#223018; --tip:#e0a94a; --tip-soft:#2a2313; --tip-border:#453a1c;
+    --code-bg:#1c2416; --shadow:none;
+  }
+  :root[data-theme="light"]{
+    --bg:#f7f9f3; --surface:#ffffff; --border:#e0e6d8; --ink:#24301f; --muted:#74806c;
+    --accent:#4c7a3f; --accent-soft:#e7f0e0; --tip:#c98a2c; --tip-soft:#fbf1dc; --tip-border:#ecd7a8;
+    --code-bg:#eef2e6; --shadow: 0 1px 2px rgba(30,40,20,.04), 0 8px 24px rgba(30,40,20,.05);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased; overflow-x: hidden;
+  }
+  h1,h2,h3{
+    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", ui-serif, serif;
+    text-wrap: balance; font-weight: 600; letter-spacing: -.01em; color: var(--ink);
+  }
+  .layout{
+    display:grid; grid-template-columns: 250px minmax(0,720px); gap: 56px;
+    max-width: 1040px; margin: 0 auto; padding: 48px 24px 120px;
+  }
+  @media (max-width: 860px){
+    .layout{ grid-template-columns: 1fr; gap: 36px; padding: 32px 20px 90px; }
+    nav.toc{ position: static !important; order: 2; padding-bottom: 8px; }
+  }
+  @media (max-width: 480px){ .layout{ padding: 24px 16px 72px; } }
+  nav.toc{ position: sticky; top: 32px; align-self: start; font-size: 13.5px; }
+  nav.toc .eyebrow{ text-transform: uppercase; letter-spacing: .08em; font-size: 11px; color: var(--muted); margin: 0 0 14px; font-weight: 700; }
+  nav.toc ol{ list-style: none; margin: 0; padding: 0; counter-reset: toc; border-left: 1px solid var(--border); }
+  nav.toc li{ counter-increment: toc; }
+  nav.toc a{
+    display: block; color: var(--muted); text-decoration: none; padding: 7px 0 7px 16px;
+    margin-left: -1px; border-left: 1px solid transparent; line-height: 1.35;
+  }
+  nav.toc a::before{
+    content: counter(toc, decimal-leading-zero) " "; font-variant-numeric: tabular-nums;
+    color: var(--muted); opacity: .55; margin-right: 4px;
+  }
+  nav.toc a:hover{ color: var(--accent); border-left-color: var(--accent); }
+  nav.toc a.active{ color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+
+  header.masthead{
+    grid-column: 1 / -1; display:flex; align-items: baseline; justify-content: space-between;
+    gap: 20px; padding-bottom: 28px; border-bottom: 1px solid var(--border); margin-bottom: 8px; flex-wrap: wrap;
+  }
+  header.masthead .id span{ color: var(--accent); }
+  header.masthead h1{ font-size: clamp(22px, 5vw, 30px); margin: 0; }
+  header.masthead p{ margin: 6px 0 0; color: var(--muted); font-size: 14.5px; }
+  header.masthead .tag{ font-size: 11.5px; color: var(--muted); text-align:right; text-transform: uppercase; letter-spacing: .07em; white-space: nowrap; }
+  header.masthead a.back{ color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 600; }
+  header.masthead a.back:hover{ text-decoration: underline; }
+
+  main{ min-width: 0; }
+  section{ padding-top: 8px; margin-bottom: 52px; scroll-margin-top: 28px; }
+  section h2{ font-size: 22px; margin: 0 0 4px; display:flex; align-items:center; gap: 10px; }
+  section h2 .num{ font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; color: var(--accent); font-weight: 600; }
+  section > .dek{ color: var(--muted); font-size: 14.5px; margin: 0 0 20px; max-width: 62ch; }
+  section h3{ font-size: 15.5px; margin: 26px 0 8px; }
+  p{ line-height: 1.62; font-size: 15px; max-width: 66ch; }
+  ul, ol.steps{ line-height: 1.62; font-size: 15px; padding-left: 22px; max-width: 66ch; }
+  ol.steps{ padding-left: 0; list-style: none; counter-reset: step; }
+  ol.steps li{ counter-increment: step; position: relative; padding-left: 34px; margin-bottom: 10px; }
+  ol.steps li::before{
+    content: counter(step); position: absolute; left: 0; top: 1px; width: 22px; height: 22px;
+    border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 700;
+    display:flex; align-items:center; justify-content:center; font-family: ui-monospace, monospace;
+  }
+  .ui{
+    display: inline-flex; align-items:center; gap: 5px; background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1px 8px 2px; font-size: 13.5px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    white-space: nowrap;
+  }
+  @media (max-width: 480px){ .ui{ white-space: normal; } }
+  .grid-cards{ display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 12px; margin: 18px 0 6px; }
+  .fcard{ background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 15px; box-shadow: var(--shadow); }
+  .fcard .ficon{ font-size: 18px; }
+  .fcard h4{ margin: 8px 0 4px; font-size: 14px; }
+  .fcard p{ margin:0; font-size: 13px; color: var(--muted); line-height: 1.5; }
+  table{ border-collapse: collapse; width: 100%; font-size: 14px; margin: 14px 0; min-width: 480px; }
+  .tablewrap{ overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  th, td{ text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th{ color: var(--muted); font-weight: 600; font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; }
+  .tip{
+    display:flex; gap: 12px; background: var(--tip-soft); border: 1px solid var(--tip-border); border-left: 3px solid var(--tip);
+    border-radius: 8px; padding: 12px 15px; margin: 16px 0; font-size: 14px;
+  }
+  .tip .ticon{ color: var(--tip); font-size: 15px; line-height: 1.5; }
+  .tip strong{ color: var(--tip); }
+  .tip p{ margin:0; font-size: 14px; }
+  footer.colophon{ grid-column: 1/-1; border-top: 1px solid var(--border); margin-top: 12px; padding-top: 20px; color: var(--muted); font-size: 12.5px; }
+  kbd{ font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; background: var(--code-bg); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; font-size: 12.5px; }
+  a:focus-visible, .ui:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce){ html{ scroll-behavior:auto; } }
+</style>
+</head>
+<body>
+<div class="layout">
+  <header class="masthead">
+    <div class="id">
+      <h1>🌱 <span>Garden</span> Planner &amp; Tracker — Manual</h1>
+      <p>Everything you need to plan, track, and harvest your garden — all in one offline app.</p>
+    </div>
+    <div class="tag">
+      <a class="back" href="garden-planner.html">← Back to the app</a>
+    </div>
+  </header>
+
+  <nav class="toc">
+    <p class="eyebrow">Contents</p>
+    <ol>
+      <li><a href="#getting-started">Getting Started</a></li>
+      <li><a href="#dashboard">Dashboard</a></li>
+      <li><a href="#layout">Garden Layout</a></li>
+      <li><a href="#log">The Garden Log Sections</a></li>
+      <li><a href="#yield">Yield Summary</a></li>
+      <li><a href="#etsy">Bonus Pages</a></li>
+      <li><a href="#backup">Backup, Import &amp; Export</a></li>
+      <li><a href="#extras">Dark Mode &amp; Printing</a></li>
+      <li><a href="#privacy">Privacy &amp; Data</a></li>
+      <li><a href="#faq">Tips &amp; FAQ</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <section id="getting-started">
+      <h2><span class="num">01</span> Getting Started</h2>
+      <p class="dek">Garden Planner &amp; Tracker is a single file that runs entirely in your browser — no install, no account, no internet connection required.</p>
+      <ol class="steps">
+        <li>Open <span class="ui">garden-planner.html</span> by double-clicking it, or dragging it into any browser window.</li>
+        <li>Use the sidebar on the left to jump between sections — click the <span class="ui">☰</span> menu button on mobile to open it.</li>
+        <li>Everything you type or upload is saved automatically to this browser's local storage as you go.</li>
+        <li>The app comes pre-loaded with example entries in every section so you can see how it works — edit or delete them and start adding your own data.</li>
+      </ol>
+      <div class="tip"><span class="ticon">💡</span><p><strong>Tip —</strong> Because your data lives in this specific browser, export a backup regularly (see <a href="#backup">Backup, Import &amp; Export</a>) especially before clearing browser data or switching devices.</p></div>
+      <div class="tip"><span class="ticon">🔒</span><p><strong>Preview mode —</strong> Free/preview copies of this file allow a limited number of changes before asking for an activation code. Your purchase includes the activation code — enter it once via the "Activate" link at the bottom of the page to unlock unlimited editing permanently in this browser.</p></div>
+    </section>
+
+    <section id="dashboard">
+      <h2><span class="num">02</span> Dashboard</h2>
+      <p class="dek">Your garden's home base — a quick summary of the season, updated automatically as you log data elsewhere in the app.</p>
+      <div class="grid-cards">
+        <div class="fcard"><span class="ficon">🍅</span><h4>Total Harvest</h4><p>Sum of all quantities logged in Harvest Tracker, in kg.</p></div>
+        <div class="fcard"><span class="ficon">💰</span><h4>Total Expenses</h4><p>Sum of all costs logged in Garden Expenses.</p></div>
+        <div class="fcard"><span class="ficon">🗺️</span><h4>Beds / Rows</h4><p>Pulled from Season Details, or counted from Garden Layout if left blank.</p></div>
+        <div class="fcard"><span class="ficon">✅</span><h4>Tasks To Do</h4><p>Count of unfinished items in the Garden To-Do List.</p></div>
+      </div>
+      <h3>Season Details</h3>
+      <p>Fill in the garden year, cultivated area, number of beds/rows, and your goals for the season. Click <span class="ui">Save</span> to store your changes.</p>
+    </section>
+
+    <section id="layout">
+      <h2><span class="num">03</span> Garden Layout</h2>
+      <p class="dek">Map out where everything grows.</p>
+      <h3>Garden Sketch</h3>
+      <p>Upload a photo or drawing of your garden layout with the file picker. It's stored directly in the app — click <span class="ui">🗑️ Remove Sketch</span> underneath the image to delete it.</p>
+      <h3>Crop Positioning Notes</h3>
+      <p>A free-text box for crop rotation plans, bed orientation, or sun exposure notes. Click <span class="ui">Save Notes</span> after editing.</p>
+      <h3>Bed Dimensions</h3>
+      <p>Click <span class="ui">+ Add Bed</span> to record a bed's name, size, planned crop, and an optional photo. Bed names you create here automatically appear as choices in the <strong>Zone</strong> dropdown of the Watering Log.</p>
+      <div class="tip"><span class="ticon">⚠️</span><p><strong>Companion planting check —</strong> Beds are treated as physically next to each other in the order they're listed. If a bed's crop is a bad companion for the crop in the next bed (per your Companion Planting Chart), both rows get a "⚠️ Bad neighbor" badge — hover it to see why.</p></div>
+    </section>
+
+    <section id="log">
+      <h2><span class="num">04</span> The Garden Log Sections</h2>
+      <p class="dek">Ten trackers covering every stage of the growing season. All work the same way:</p>
+      <ol class="steps">
+        <li>Click <span class="ui">+ Add …</span> at the top right of the section.</li>
+        <li>Fill in the form — fields marked with <strong>*</strong> are required.</li>
+        <li>Click <span class="ui">Save</span>. Your entry appears instantly in the table.</li>
+        <li>Use the ✏️ and 🗑️ icons on any row to edit or delete it.</li>
+      </ol>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Section</th><th>What it tracks</th></tr></thead>
+          <tbody>
+            <tr><td>🌾 Seed Inventory</td><td>Plant, variety, quantity on hand, supplier, purchase date.</td></tr>
+            <tr><td>📅 Planting Schedule</td><td>Sowing, transplanting, and estimated harvest dates per crop. Sowing dates earlier than your recorded last frost date are flagged with a ⚠️ badge. Adding dates here also auto-creates matching tasks in the Garden To-Do List.</td></tr>
+            <tr><td>💧 Watering Log</td><td>Date, zone/bed (dropdown), amount, and notes.</td></tr>
+            <tr><td>🌿 Fertilizer Log</td><td>Fertilizer type, application date, amount, and results.</td></tr>
+            <tr><td>🐞 Pest &amp; Disease Tracker</td><td>Issue, date, treatment applied, and outcome.</td></tr>
+            <tr><td>🌡️ Weather Notes</td><td>Temperature, rain, frost, and special weather events.</td></tr>
+            <tr><td>📸 Plant Growth Tracker</td><td>Plant, date, height, a monthly photo, and observations.</td></tr>
+            <tr><td>🍅 Harvest Tracker</td><td>Crop, harvest date, quantity in kg, and quality rating.</td></tr>
+            <tr><td>🧺 Produce Valorization</td><td>What happened to each harvest: eaten fresh, preserved, sold, given away, or composted — plus value obtained.</td></tr>
+            <tr><td>💰 Garden Expenses</td><td>Category (seeds/tools/fertilizer/other), description, date, cost.</td></tr>
+            <tr><td>📝 Garden Journal</td><td>Daily observations, lessons learned, and ideas for next season.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tip"><span class="ticon">📸</span><p><strong>Photos —</strong> Any field with an image upload (bed photos, plant growth photos) stores the picture directly inside your saved data, so it travels with your backup file.</p></div>
+    </section>
+
+    <section id="yield">
+      <h2><span class="num">05</span> Yield Summary</h2>
+      <p class="dek">The only section that calculates itself.</p>
+      <p>Yield Summary automatically totals your <strong>Harvest Tracker</strong> quantities against every cost you've logged — <strong>Seed Inventory</strong>, <strong>Fertilizer Log</strong>, and <strong>Garden Expenses</strong> — to show total yield, total cost, and cost per kg, with a breakdown by source. It also pulls in <strong>Produce Valorization</strong> to show actual revenue and profit from anything you've marked as sold, plus a breakdown of where the rest of the harvest went. Enter an estimated <strong>sale price per kg</strong> and click <span class="ui">Recalculate</span> to see a separate projected revenue and profit if you sold your entire harvest at that price.</p>
+    </section>
+
+    <section id="etsy">
+      <h2><span class="num">06</span> Bonus Pages</h2>
+      <p class="dek">Extra reference pages designed to add value to a printed or digital garden planner product.</p>
+      <div class="grid-cards">
+        <div class="fcard"><span class="ficon">🤝</span><h4>Companion Planting Chart</h4><p>Comes preloaded with 6 common plant pairings — add, edit, or delete rows freely.</p></div>
+        <div class="fcard"><span class="ficon">❄️</span><h4>Frost Dates Tracker</h4><p>Record last spring frost and first fall frost per location/zone.</p></div>
+        <div class="fcard"><span class="ficon">📆</span><h4>Monthly Garden Planner</h4><p>A note box for each of the 12 months — click outside the box to save automatically.</p></div>
+        <div class="fcard"><span class="ficon">🌱</span><h4>Seed Starting Tracker</h4><p>Indoor start date, move-outdoors date, and location per plant.</p></div>
+        <div class="fcard"><span class="ficon">🗓️</span><h4>Harvest Calendar</h4><p>A read-only monthly view, generated automatically from your Harvest Tracker entries.</p></div>
+        <div class="fcard"><span class="ficon">📷</span><h4>Photo Gallery</h4><p>Every photo from Garden Layout and Plant Growth Tracker in one chronological grid — click any photo to jump to its entry.</p></div>
+        <div class="fcard"><span class="ficon">✅</span><h4>Garden To-Do List</h4><p>Tasks with due dates, priority, and a done checkbox — feeds the Dashboard's open task count. Sow/transplant/harvest tasks from Planting Schedule appear here automatically.</p></div>
+      </div>
+    </section>
+
+    <section id="backup">
+      <h2><span class="num">07</span> Backup, Import &amp; Export</h2>
+      <p class="dek">Your data lives in this browser only — these tools are how you keep it safe or move it elsewhere.</p>
+      <ol class="steps">
+        <li>Click <span class="ui">⬇️ Export</span> in the top bar to download a full JSON backup file, named with today's date.</li>
+        <li>Store that file somewhere safe (cloud drive, external disk).</li>
+        <li>To restore or transfer your data, click <span class="ui">⬆️ Import</span> and choose a previously exported JSON file.</li>
+      </ol>
+      <div class="tip"><span class="ticon">⚠️</span><p><strong>Careful —</strong> Importing a backup replaces all current data in the app. Export your current data first if you don't want to lose it.</p></div>
+    </section>
+
+    <section id="extras">
+      <h2><span class="num">08</span> Dark Mode &amp; Printing</h2>
+      <p class="dek">Two small buttons, both in the top bar.</p>
+      <p><span class="ui">🌙 / ☀️</span> toggles dark mode — your preference is remembered for next time. <span class="ui">🖨️ Print</span> opens your browser's print dialog so you can print any section, or save it as a PDF.</p>
+    </section>
+
+    <section id="privacy">
+      <h2><span class="num">09</span> Privacy &amp; Data</h2>
+      <p class="dek">Nothing you enter ever leaves your device.</p>
+      <p>Garden Planner &amp; Tracker has no server, no account, and no analytics. All information — including uploaded photos — is stored in this browser's local storage. Clearing your browser's site data for this file will erase everything, so keep regular exports as described above.</p>
+    </section>
+
+    <section id="faq">
+      <h2><span class="num">10</span> Tips &amp; FAQ</h2>
+      <h3>Can I use this on my phone or tablet?</h3>
+      <p>Yes — the layout adapts to any screen size. On narrow screens, tap the <span class="ui">☰</span> icon to open the section menu.</p>
+      <h3>Where did the demo entries come from?</h3>
+      <p>Every section ships with a few example rows so you can see the intended format at a glance. Delete them with the 🗑️ icon whenever you're ready to start fresh.</p>
+      <h3>I accidentally deleted something — can I undo it?</h3>
+      <p>There's no undo, but if you exported a recent backup you can re-import it. Otherwise, deletions are permanent — the app will always ask you to confirm before deleting a row.</p>
+      <h3>Does this sync between my devices?</h3>
+      <p>Not automatically. Export a backup on one device and import it on another to move your data across.</p>
+    </section>
+  </main>
+
+  <footer class="colophon">Garden Planner &amp; Tracker — plain HTML, CSS and JavaScript. Zero dependencies, zero build step.</footer>
+</div>
+</body>
+</html>

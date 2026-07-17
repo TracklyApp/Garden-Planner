@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garden Planner &amp; Tracker</title>
+<style>
+  :root {
+    --bg: #f3f6ef;
+    --panel: #ffffff;
+    --border: #e0e6d8;
+    --text: #24301f;
+    --muted: #74806c;
+    --accent: #4c7a3f;
+    --accent-rgb: 76,122,63;
+    --accent-soft: #e7f0e0;
+    --accent2: #a7c65a;
+    --danger: #c65a4c;
+    --warn: #c98a2c;
+    --hover: rgba(76,122,63,.08);
+    --shadow: 0 1px 3px rgba(30,40,20,.08), 0 4px 16px rgba(30,40,20,.05);
+  }
+  body.dark {
+    --bg: #10140d;
+    --panel: #171d13;
+    --border: #2a331f;
+    --text: #eaf1e2;
+    --muted: #93a186;
+    --accent: #8fc36a;
+    --accent-soft: #223018;
+    --accent2: #c8e654;
+    --danger: #ff8b7b;
+    --warn: #e0a94a;
+    --hover: rgba(255,255,255,.06);
+    --shadow: none;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); height: 100%; overflow-x: hidden; }
+  body {
+    margin: 0; min-height: 100%; max-width: 100vw;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased;
+  }
+  header {
+    background: var(--panel); border-bottom: 1px solid var(--border);
+    padding: 12px 22px; display: flex; align-items: center; gap: 14px;
+    position: sticky; top: 0; z-index: 10;
+  }
+  header h1 { font-size: 19px; margin: 0; letter-spacing: -.3px; display:flex; align-items:center; gap:8px; min-width: 0; overflow: hidden; }
+  header h1 .h1-icon { flex-shrink: 0; }
+  header h1 .h1-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  header h1 .h1-text > span { color: var(--accent); }
+  .header-meta { display: flex; flex-direction: column; justify-content: center; min-width: 0; flex: 1 1 auto; overflow: hidden; }
+  .header-datetime { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+  .top-actions { margin-left: auto; display: flex; gap: 8px; align-items:center; flex-shrink: 0; }
+  #menuBtn { flex-shrink: 0; }
+  .btn {
+    border: none; background: var(--accent); color: #fff; padding: 9px 16px;
+    border-radius: 8px; font-size: 13.5px; font-weight: 600; cursor: pointer; white-space:nowrap;
+  }
+  .btn:hover { filter: brightness(1.06); }
+  .btn.secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+  .btn.small { padding: 6px 11px; font-size: 12.5px; }
+  #menuBtn { display: none; }
+  .layout { display: flex; min-height: calc(100vh - 58px); }
+  .sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(10,12,8,.5); z-index: 59; }
+  .sidebar-backdrop.show { display: block; }
+  nav { width: 250px; padding: 16px 10px; border-right: 1px solid var(--border); background: var(--panel); overflow-y:auto; }
+  .nav-group-head {
+    padding: 12px 10px 6px; font-size: 11px; font-weight: 700; letter-spacing: .05em;
+    text-transform: uppercase; color: var(--muted); user-select: none;
+  }
+  .nav-group-head:hover { color: var(--text); }
+  .nav-group-head .chev { font-size: 9px; width: 10px; display: inline-block; }
+  .nav-item {
+    display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 8px;
+    cursor: pointer; font-size: 13.5px; color: var(--muted); margin-bottom: 1px; user-select: none;
+  }
+  .nav-item:hover { background: var(--hover); color: var(--text); }
+  .nav-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+  .nav-item .count {
+    margin-left: auto; font-size: 11px; background: var(--bg); color: var(--muted);
+    padding: 1px 7px; border-radius: 20px;
+  }
+  main { flex: 1; min-width: 0; padding: 22px 26px 60px; max-width: 1100px; }
+  .page-head { display: flex; align-items: flex-start; margin-bottom: 16px; gap: 10px; flex-wrap: wrap; }
+  .page-head h2 { margin: 0; font-size: 21px; letter-spacing: -.3px; }
+  .page-head p { margin: 4px 0 0; color: var(--muted); font-size: 13px; max-width: 640px; }
+  .page-head .btn { margin-left: auto; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 15px 17px; margin-bottom: 12px; box-shadow: var(--shadow);
+  }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+  .stat-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; box-shadow: var(--shadow); }
+  .stat-card .num { font-size: 22px; font-weight: 700; color: var(--accent); }
+  .stat-card .lbl { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .week-row {
+    display: flex; align-items: center; gap: 10px; padding: 9px 4px;
+    border-bottom: 1px solid var(--border); cursor: pointer; font-size: 13.5px;
+  }
+  .week-row:last-child { border-bottom: none; }
+  .week-row:hover { color: var(--accent); }
+  .week-row .wr-date { margin-left: auto; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+  .week-row.overdue { color: var(--danger); }
+  .week-row.overdue .wr-date { color: var(--danger); }
+  .week-row.today { background: var(--accent-soft); border-left: 3px solid var(--accent); padding-left: 8px; border-radius: 6px; font-weight: 700; }
+  .week-row.today .wr-date { color: var(--accent); font-weight: 700; }
+  .field { margin-bottom: 13px; }
+  .field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 14px; font-family: inherit; outline: none; background: var(--panel); color: var(--text);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+  .field textarea { resize: vertical; min-height: 60px; }
+  .field-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .field-row .field { flex: 1; min-width: 160px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  thead th {
+    text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .03em;
+    color: var(--muted); padding: 8px 10px; border-bottom: 2px solid var(--border);
+  }
+  tbody td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tbody td.top { vertical-align: top; }
+  tbody tr:hover { background: var(--hover); }
+  tbody tr:last-child td { border-bottom: none; }
+  .table-wrap { overflow-x: auto; }
+  .row-actions { display: flex; gap: 4px; white-space: nowrap; }
+  .icon-btn { border: none; background: transparent; color: var(--muted); cursor: pointer; padding: 5px; border-radius: 6px; font-size: 13px; }
+  .icon-btn:hover { background: var(--bg); color: var(--text); }
+  .icon-btn.del:hover { color: var(--danger); }
+  .empty { text-align: center; color: var(--muted); padding: 50px 20px; font-size: 14px; }
+  .thumb { width: 42px; height: 42px; border-radius: 6px; object-fit: cover; display: block; }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 20px; font-weight: 600; background: var(--accent-soft); color: var(--accent); }
+  .overlay {
+    position: fixed; inset: 0; background: rgba(15,20,10,.45); display: none;
+    align-items: center; justify-content: center; z-index: 50; padding: 20px; overflow-y:auto;
+  }
+  .overlay.show { display: flex; }
+  .modal {
+    background: var(--panel); color: var(--text); border-radius: 14px; width: 100%; max-width: 520px;
+    max-height: calc(100vh - 40px); overflow-y: auto; padding: 22px; box-shadow: 0 20px 60px rgba(20,25,40,.3);
+    margin: auto;
+  }
+  .modal h3 { margin: 0 0 16px; font-size: 18px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 18px; position: sticky; bottom: 0; background: var(--panel); padding: 10px 0 2px; }
+  .modal-actions .btn { flex: 1; }
+  .month-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+  .month-card h4 { margin: 0 0 8px; font-size: 14px; color: var(--accent); }
+  .month-card textarea { width: 100%; min-height: 90px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); color: var(--text); padding: 8px; font-family: inherit; font-size: 13px; resize: vertical; }
+  .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+  .gallery-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); cursor: pointer; }
+  .gallery-card:hover { border-color: var(--accent); }
+  .gallery-card img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; }
+  .gallery-card .gc-label { padding: 8px 10px 2px; font-size: 12.5px; font-weight: 600; }
+  .gallery-card .gc-date { padding: 0 10px 8px; font-size: 11px; color: var(--muted); }
+  .sketch-preview { max-width: 100%; border-radius: 10px; border: 1px solid var(--border); margin-top: 10px; display:block; }
+  .goal-box textarea { width:100%; min-height:90px; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 20px; }
+  @media (max-width: 780px) {
+    #menuBtn { display: inline-flex; align-items:center; justify-content:center; }
+    nav {
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 60; width: 260px; max-width: 82vw;
+      transform: translateX(-100%); transition: transform .25s ease; box-shadow: 4px 0 24px rgba(0,0,0,.3);
+    }
+    nav.open { transform: translateX(0); }
+    .stats-grid { grid-template-columns: repeat(2,1fr); }
+    .month-grid { grid-template-columns: repeat(1,1fr); }
+    main { padding: 16px 12px 60px; }
+  }
+  @media (max-width: 640px) {
+    header { padding: 8px 10px; gap: 8px; flex-wrap: wrap; row-gap: 8px; }
+    header h1 { font-size: 15px; gap: 5px; }
+    .header-datetime { font-size: 10px; }
+    .search-box { display: block; order: 3; flex: 1 1 100%; max-width: none; margin-left: 0; }
+    .top-actions { gap: 4px; order: 4; flex: 1 1 100%; justify-content: flex-end; margin-left: 0; }
+    .btn.small { padding: 7px 9px; }
+    .btn .btn-label { display: none; }
+    #menuBtn { padding: 7px 9px !important; }
+    .page-head .btn { margin-left: 0; width: 100%; }
+    .page-head { flex-direction: column; align-items: stretch; }
+    .field-row { flex-direction: column; }
+    .field-row .field { min-width: 0; }
+  }
+  @media (max-width: 400px) {
+    header h1 { font-size: 13.5px; }
+  }
+
+  /* Search */
+  .search-box { position: relative; flex: 1 1 auto; min-width: 0; max-width: 320px; margin-left: 8px; }
+  .search-box input {
+    width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 13.5px; background: var(--bg); color: var(--text); outline: none;
+  }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-results {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow), 0 8px 24px rgba(0,0,0,.2);
+    max-height: 360px; overflow-y: auto; z-index: 40; display: none;
+  }
+  .search-results.show { display: block; }
+  .search-result {
+    padding: 9px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid var(--border);
+  }
+  .search-result:last-child { border-bottom: none; }
+  .search-result:hover { background: var(--hover); }
+  .search-result .sr-sec { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--accent); font-weight: 700; }
+  .search-result .sr-title { font-weight: 600; margin-top: 1px; }
+  .search-empty { padding: 14px 12px; font-size: 13px; color: var(--muted); }
+
+  /* Chart */
+  .chart-wrap { overflow-x: auto; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 10px; height: 180px; padding: 10px 4px 0; min-width: 320px; }
+  .bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; flex: 1; height: 100%; min-width: 26px; }
+  .bar-col .bar { width: 100%; max-width: 34px; background: linear-gradient(180deg, var(--accent2), var(--accent)); border-radius: 5px 5px 0 0; min-height: 2px; }
+  .bar-col .bar-val { font-size: 10.5px; color: var(--muted); margin-bottom: 3px; }
+  .bar-col .bar-lbl { font-size: 10.5px; color: var(--muted); margin-top: 6px; }
+
+  /* Print */
+  @media print {
+    #menuBtn, .top-actions, nav, .sidebar-backdrop, .overlay, footer, .page-head .btn, .row-actions,
+    #sketchInput, #layoutNotes + button, .search-box { display: none !important; }
+    body { background: #fff; color: #000; }
+    header { position: static; border-bottom: 2px solid #000; }
+    .layout { display: block; min-height: 0; }
+    main { max-width: 100%; padding: 0; }
+    .card, .stat-card { box-shadow: none; border: 1px solid #999; break-inside: avoid; }
+    table { font-size: 12px; }
+    thead th, tbody td { border-color: #ccc; color: #000; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="menuBtn" class="btn secondary small" onclick="toggleNav()">☰</button>
+  <div class="header-meta">
+    <h1><span class="h1-icon">🌱</span><span class="h1-text"><span>Garden</span> Planner &amp; Tracker</span></h1>
+    <div class="header-datetime" id="headerDate"></div>
+  </div>
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search plants, crops, entries..." oninput="onSearchInput()" onfocus="onSearchInput()">
+    <div class="search-results" id="searchResults"></div>
+  </div>
+  <div class="top-actions">
+    <a class="btn secondary small" href="garden-planner-manual.html" style="text-decoration:none;display:inline-flex;align-items:center">❓ <span class="btn-label">Manual</span></a>
+    <button class="btn secondary small" onclick="toggleDark()" id="darkBtn">🌙</button>
+    <button class="btn secondary small" onclick="exportData()">⬇️ <span class="btn-label">Export</span></button>
+    <button class="btn secondary small" onclick="document.getElementById('importFile').click()">⬆️ <span class="btn-label">Import</span></button>
+    <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)">
+    <button class="btn secondary small" onclick="window.print()">🖨️ <span class="btn-label">Print</span></button>
+  </div>
+</header>
+
+<div class="sidebar-backdrop" id="backdrop" onclick="toggleNav()"></div>
+<div class="layout">
+  <nav id="sideNav">
+    <div id="navList"></div>
+  </nav>
+  <main id="main"></main>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<footer>
+  Garden Planner &amp; Tracker — your data stays saved locally in this browser (localStorage). Export regularly to keep a backup.
+  <div id="activationStatus" style="margin-top:6px;font-size:12.5px"></div>
+</footer>
+
+<script>
+/* ---------------- Config: sections ---------------- */
+const SECTIONS = [
+  { id: 'dashboard', group: 'Main', icon: '🌱', title: 'Dashboard', special: 'dashboard' },
+  { id: 'layout', group: 'Main', icon: '🗺️', title: 'Garden Layout', special: 'layout' },
+
+  { id: 'seeds', group: 'Garden Log', icon: '🌾', title: 'Seed Inventory',
+    addLabel: 'seed', fields: [
+      { key: 'plant', label: 'Plant', type: 'text', required: true },
+      { key: 'variety', label: 'Variety', type: 'text' },
+      { key: 'qty', label: 'Quantity Available', type: 'text' },
+      { key: 'supplier', label: 'Supplier', type: 'text' },
+      { key: 'purchaseDate', label: 'Purchase Date', type: 'date' },
+      { key: 'cost', label: 'Cost', type: 'number' },
+    ] },
+  { id: 'schedule', group: 'Garden Log', icon: '📅', title: 'Planting Schedule',
+    addLabel: 'crop', fields: [
+      { key: 'crop', label: 'Crop', type: 'text', required: true },
+      { key: 'sowDate', label: 'Sowing Date', type: 'date' },
+      { key: 'transplantDate', label: 'Transplant Date', type: 'date' },
+      { key: 'harvestEstDate', label: 'Estimated Harvest Date', type: 'date' },
+    ] },
+  { id: 'watering', group: 'Garden Log', icon: '💧', title: 'Watering Log',
+    addLabel: 'entry', fields: [
+      { key: 'date', label: 'Date', type: 'date', required: true },
+      { key: 'zone', label: 'Zone', type: 'select', dynamic: 'beds' },
+      { key: 'amount', label: 'Water Amount', type: 'text' },
+      { key: 'notes', label: 'Notes', type: 'textarea' },
+    ] },
+  { id: 'fertilizer', group: 'Garden Log', icon: '🌿', title: 'Fertilizer Log',
+    addLabel: 'application', fields: [
+      { key: 'type', label: 'Fertilizer Type', type: 'text', required: true },
+      { key: 'date', label: 'Application Date', type: 'date' },
+      { key: 'amount', label: 'Amount', type: 'text' },
+      { key: 'cost', label: 'Cost', type: 'number' },
+      { key: 'crop', label: 'Crop (optional)', type: 'select', dynamic: 'crops' },
+      { key: 'result', label: 'Results', type: 'textarea' },
+    ] },
+  { id: 'pest', group: 'Garden Log', icon: '🐞', title: 'Pest & Disease Tracker',
+    addLabel: 'issue', fields: [
+      { key: 'issue', label: 'Issue Identified', type: 'text', required: true },
+      { key: 'date', label: 'Date', type: 'date' },
+      { key: 'treatment', label: 'Treatment Applied', type: 'text' },
+      { key: 'outcome', label: 'Outcome', type: 'select', options: ['Resolved', 'In progress', 'Worsened'] },
+    ] },
+  { id: 'weather', group: 'Garden Log', icon: '🌡️', title: 'Weather Notes',
+    addLabel: 'note', fields: [
+      { key: 'date', label: 'Date', type: 'date', required: true },
+      { key: 'temp', label: 'Temperature', type: 'text' },
+      { key: 'rain', label: 'Rain', type: 'text' },
+      { key: 'frost', label: 'Frost', type: 'select', options: ['No', 'Yes'] },
+      { key: 'events', label: 'Special Events', type: 'textarea' },
+    ] },
+  { id: 'growth', group: 'Garden Log', icon: '📸', title: 'Plant Growth Tracker',
+    addLabel: 'entry', fields: [
+      { key: 'plant', label: 'Plant', type: 'text', required: true },
+      { key: 'date', label: 'Date', type: 'date' },
+      { key: 'height', label: 'Plant Height', type: 'text' },
+      { key: 'photo', label: 'Monthly Photo', type: 'image' },
+      { key: 'notes', label: 'Notes', type: 'textarea' },
+    ] },
+  { id: 'harvest', group: 'Garden Log', icon: '🍅', title: 'Harvest Tracker',
+    addLabel: 'harvest', fields: [
+      { key: 'crop', label: 'Crop', type: 'select', dynamic: 'crops', required: true },
+      { key: 'date', label: 'Harvest Date', type: 'date' },
+      { key: 'qty', label: 'Quantity (kg)', type: 'number' },
+      { key: 'quality', label: 'Quality', type: 'select', options: ['Excellent', 'Good', 'Average', 'Poor'] },
+    ] },
+  { id: 'expenses', group: 'Garden Log', icon: '💰', title: 'Garden Expenses',
+    addLabel: 'expense', fields: [
+      { key: 'category', label: 'Category', type: 'select', options: ['Seeds', 'Tools', 'Fertilizer', 'Other'] },
+      { key: 'description', label: 'Description', type: 'text' },
+      { key: 'date', label: 'Date', type: 'date' },
+      { key: 'cost', label: 'Cost', type: 'number' },
+      { key: 'crop', label: 'Crop (optional)', type: 'select', dynamic: 'crops' },
+    ] },
+  { id: 'valorization', group: 'Garden Log', icon: '🧺', title: 'Produce Valorization',
+    addLabel: 'entry', fields: [
+      { key: 'crop', label: 'Crop', type: 'select', dynamic: 'crops', required: true },
+      { key: 'date', label: 'Date', type: 'date' },
+      { key: 'qty', label: 'Quantity (kg)', type: 'number' },
+      { key: 'use', label: 'Use', type: 'select', options: ['Fresh Eating', 'Preserved / Canned', 'Sold', 'Given Away', 'Composted'] },
+      { key: 'value', label: 'Value / Price Obtained', type: 'number' },
+      { key: 'notes', label: 'Notes', type: 'textarea' },
+    ] },
+  { id: 'yield', group: 'Garden Log', icon: '📈', title: 'Yield Summary', special: 'yield' },
+  { id: 'journal', group: 'Garden Log', icon: '📝', title: 'Garden Journal',
+    addLabel: 'entry', fields: [
+      { key: 'date', label: 'Date', type: 'date', required: true },
+      { key: 'observations', label: 'Daily Observations', type: 'textarea' },
+      { key: 'lessons', label: 'Lessons Learned', type: 'textarea' },
+      { key: 'ideas', label: 'Ideas for Next Season', type: 'textarea' },
+    ] },
+
+  { id: 'companion', group: 'Bonus Pages', icon: '🤝', title: 'Companion Planting Chart',
+    addLabel: 'plant', fields: [
+      { key: 'plant', label: 'Plant', type: 'text', required: true },
+      { key: 'good', label: 'Good Companions', type: 'text' },
+      { key: 'bad', label: 'Avoid', type: 'text' },
+      { key: 'note', label: 'Note', type: 'text' },
+    ] },
+  { id: 'frost', group: 'Bonus Pages', icon: '❄️', title: 'Frost Dates Tracker',
+    addLabel: 'zone', fields: [
+      { key: 'zone', label: 'Location / Zone', type: 'text', required: true },
+      { key: 'lastFrost', label: 'Last Frost (Spring)', type: 'date' },
+      { key: 'firstFrost', label: 'First Frost (Fall)', type: 'date' },
+      { key: 'notes', label: 'Notes', type: 'textarea' },
+    ] },
+  { id: 'monthly', group: 'Bonus Pages', icon: '📆', title: 'Monthly Garden Planner', special: 'monthly' },
+  { id: 'seedStarting', group: 'Bonus Pages', icon: '🌱', title: 'Seed Starting Tracker',
+    addLabel: 'plant', fields: [
+      { key: 'plant', label: 'Plant', type: 'text', required: true },
+      { key: 'startIndoor', label: 'Start Indoors', type: 'date' },
+      { key: 'moveOutdoor', label: 'Move Outdoors', type: 'date' },
+      { key: 'location', label: 'Location', type: 'text' },
+      { key: 'notes', label: 'Notes', type: 'textarea' },
+    ] },
+  { id: 'harvestCal', group: 'Bonus Pages', icon: '🗓️', title: 'Harvest Calendar', special: 'harvestCal' },
+  { id: 'gallery', group: 'Bonus Pages', icon: '📷', title: 'Photo Gallery', special: 'gallery' },
+  { id: 'todo', group: 'Bonus Pages', icon: '✅', title: 'Garden To-Do List',
+    addLabel: 'task', fields: [
+      { key: 'task', label: 'Task', type: 'text', required: true },
+      { key: 'due', label: 'Due Date', type: 'date' },
+      { key: 'priority', label: 'Priority', type: 'select', options: ['High', 'Medium', 'Low'] },
+      { key: 'done', label: 'Done', type: 'checkbox' },
+    ] },
+];
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+const DEFAULT_COMPANION = [
+  { id: 'c1', plant: 'Tomatoes', good: 'Basil, Parsley, Onion, Carrot', bad: 'Cabbage, Fennel, Potatoes', note: 'Basil improves flavor and repels pests.' },
+  { id: 'c2', plant: 'Cucumbers', good: 'Beans, Peas, Radishes, Sunflowers', bad: 'Potatoes, Strong herbs', note: 'Grow well next to vertical supports.' },
+  { id: 'c3', plant: 'Carrots', good: 'Onion, Leek, Tomatoes, Lettuce', bad: 'Dill', note: 'Onions repel carrot fly.' },
+  { id: 'c4', plant: 'Peppers', good: 'Basil, Onion, Carrot', bad: 'Beans, Cabbage', note: 'Basil reduces aphid attacks.' },
+  { id: 'c5', plant: 'Cabbage', good: 'Onion, Potatoes, Dill', bad: 'Tomatoes, Strawberries', note: 'Avoid planting near nightshades.' },
+  { id: 'c6', plant: 'Beans', good: 'Cucumbers, Corn, Strawberries', bad: 'Onion, Garlic', note: 'Fixes nitrogen in soil, benefits neighbors.' },
+];
+
+/* ---------------- Generated placeholder images ---------------- */
+function genImg(emoji, bg1, bg2) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="${bg1}"/><stop offset="100%" stop-color="${bg2}"/>
+    </linearGradient></defs>
+    <rect width="240" height="240" rx="18" fill="url(#g)"/>
+    <foreignObject x="0" y="0" width="240" height="240">
+      <div xmlns="http://www.w3.org/1999/xhtml" style="width:240px;height:240px;display:flex;align-items:center;justify-content:center;font-size:120px;line-height:1">${emoji}</div>
+    </foreignObject>
+  </svg>`;
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+
+/* ---------------- Data / storage ---------------- */
+const STORAGE_KEY = 'gardenPlannerData_v10';
+let data = loadData();
+
+function defaultData() {
+  return {
+    meta: { year: new Date().getFullYear().toString(), area: '1,200 sqft', bedsCount: '6', goals: 'Grow enough tomatoes and greens to eat fresh all summer, and try preserving extras for winter.' },
+    layout: {
+      beds: [
+        { id: uid(), name: 'Bed 1', size: '3m x 1.2m', crop: 'Tomatoes & Basil', photo: genImg('🍅', '#8fc36a', '#4c7a3f') },
+        { id: uid(), name: 'Bed 2', size: '3m x 1.2m', crop: 'Cabbage & Carrots', photo: genImg('🥕', '#e0a94a', '#c98a2c') },
+        { id: uid(), name: 'Bed 3', size: '2m x 1m', crop: 'Lettuce & Spinach', photo: genImg('🥬', '#c8e654', '#8fc36a') },
+      ],
+      sketch: '',
+      notes: 'Beds 1-2 get full morning sun; Bed 3 is partly shaded by the fence in the afternoon. Rotate nightshades (tomatoes/peppers) to a new bed each year.',
+    },
+    seeds: [
+      { id: uid(), plant: 'Tomato', variety: 'Roma', qty: '25 seeds', supplier: 'Local Garden Store', purchaseDate: '2026-02-10', cost: '4.50' },
+      { id: uid(), plant: 'Carrot', variety: 'Nantes', qty: '1 packet', supplier: 'Seed Savers Exchange', purchaseDate: '2026-02-15', cost: '3.25' },
+      { id: uid(), plant: 'Basil', variety: 'Genovese', qty: '15 seeds', supplier: 'Local Garden Store', purchaseDate: '2026-02-10', cost: '3.75' },
+    ],
+    schedule: [
+      { id: uid(), crop: 'Tomato', sowDate: '2026-03-01', transplantDate: '2026-04-20', harvestEstDate: '2026-07-15' },
+      { id: uid(), crop: 'Carrot', sowDate: '2026-04-05', transplantDate: '', harvestEstDate: '2026-06-20' },
+      { id: uid(), crop: 'Lettuce', sowDate: '2026-03-15', transplantDate: '2026-04-10', harvestEstDate: '2026-05-20' },
+    ],
+    watering: [
+      { id: uid(), date: '2026-06-01', zone: 'Bed 1', amount: '10 L', notes: 'Deep watered in the morning, soil was dry 5cm down.' },
+      { id: uid(), date: '2026-06-03', zone: 'Bed 3', amount: '5 L', notes: 'Light watering, still moist from rain.' },
+    ],
+    fertilizer: [
+      { id: uid(), type: 'Compost tea', date: '2026-05-10', amount: '2 L per plant', cost: '0', crop: 'Tomato', result: 'Noticeably greener leaves after 1 week.' },
+      { id: uid(), type: 'Fish emulsion', date: '2026-06-05', amount: '1 L diluted', cost: '9.99', crop: 'Tomato', result: 'Good growth boost, slight smell for a day.' },
+    ],
+    pest: [
+      { id: uid(), issue: 'Aphids on tomato leaves', date: '2026-06-08', treatment: 'Neem oil spray', outcome: 'Resolved' },
+      { id: uid(), issue: 'Slugs on lettuce', date: '2026-05-25', treatment: 'Crushed eggshells around base', outcome: 'In progress' },
+    ],
+    weather: [
+      { id: uid(), date: '2026-05-01', temp: '18°C', rain: '5mm', frost: 'No', events: 'First warm week of spring.' },
+      { id: uid(), date: '2026-04-10', temp: '2°C', rain: '0mm', frost: 'Yes', events: 'Unexpected late frost, covered seedlings overnight.' },
+    ],
+    growth: [
+      { id: uid(), plant: 'Tomato', date: '2026-05-01', height: '25 cm', photo: genImg('🌱', '#a7c65a', '#4c7a3f'), notes: 'Sturdy stems, first flower buds appearing.' },
+      { id: uid(), plant: 'Tomato', date: '2026-06-01', height: '70 cm', photo: genImg('🍅', '#8fc36a', '#c65a4c'), notes: 'Staked plants, several trusses of fruit setting.' },
+    ],
+    harvest: [
+      { id: uid(), crop: 'Lettuce', date: '2026-05-22', qty: '1.5', quality: 'Good' },
+      { id: uid(), crop: 'Tomato', date: '2026-07-18', qty: '4.2', quality: 'Excellent' },
+    ],
+    valorization: [
+      { id: uid(), crop: 'Lettuce', date: '2026-05-23', qty: '1.5', use: 'Fresh Eating', value: '', notes: 'Eaten in salads over the following week.' },
+      { id: uid(), crop: 'Tomato', date: '2026-07-20', qty: '2.5', use: 'Preserved / Canned', value: '', notes: 'Made into 3 jars of tomato sauce for winter.' },
+      { id: uid(), crop: 'Tomato', date: '2026-07-20', qty: '1.7', use: 'Sold', value: '12.00', notes: 'Sold at the local farmers market.' },
+    ],
+    expenses: [
+      { id: uid(), category: 'Seeds', description: 'Tomato & carrot seed packets', date: '2026-02-10', cost: '12.50', crop: '' },
+      { id: uid(), category: 'Tools', description: 'Hand trowel and pruners', date: '2026-03-01', cost: '24.00', crop: '' },
+      { id: uid(), category: 'Fertilizer', description: 'Fish emulsion bottle', date: '2026-06-05', cost: '9.99', crop: 'Tomato' },
+    ],
+    journal: [
+      { id: uid(), date: '2026-05-01', observations: 'Everything popped up after the rain. Beds 1 and 2 look full and healthy.', lessons: 'Should have thinned the carrots earlier — they were overcrowded.', ideas: 'Try succession planting lettuce every 2 weeks next season.' },
+    ],
+    todo: [
+      { id: uid(), task: 'Stake tomato plants', due: '2026-06-01', priority: 'High', done: true },
+      { id: uid(), task: 'Order fall cover crop seeds', due: '2026-08-15', priority: 'Medium', done: false },
+      { id: uid(), task: 'Clean and sharpen tools', due: '2026-09-01', priority: 'Low', done: false },
+    ],
+    seedStarting: [
+      { id: uid(), plant: 'Tomato', startIndoor: '2026-02-15', moveOutdoor: '2026-04-20', location: 'South window sill', notes: 'Used grow lights for extra light after week 2.' },
+      { id: uid(), plant: 'Basil', startIndoor: '2026-03-01', moveOutdoor: '2026-04-25', location: 'Kitchen window', notes: 'Germinated within 6 days.' },
+    ],
+    frost: [
+      { id: uid(), zone: 'Zone 6b - Backyard', lastFrost: '2026-04-15', firstFrost: '2026-10-20', notes: 'Based on 10-year local averages; microclimate near the fence is a bit warmer.' },
+    ],
+    companion: DEFAULT_COMPANION.map(c => ({...c})),
+    monthly: {
+      January: 'Order seed catalogs, plan crop rotation, clean and sharpen tools.',
+      February: 'Start tomato and pepper seeds indoors under grow lights.',
+      March: 'Prepare beds, add compost, start hardening off early seedlings.',
+      April: 'Direct sow carrots and lettuce; transplant cold-hardy starts.',
+      May: 'Transplant tomatoes after last frost; set up stakes and supports.',
+      June: 'Mulch beds, watch for pests, begin regular watering schedule.',
+      July: 'Harvest lettuce and early crops; keep up with watering in heat.',
+      August: 'Main tomato and pepper harvest; start fall crop seeds.',
+      September: 'Plant garlic and fall greens; begin cleaning spent summer beds.',
+      October: 'Final harvests before frost; plant cover crops.',
+      November: 'Clean up beds, add compost, store tools for winter.',
+      December: 'Rest, review the season, plan next year\'s garden.',
+    },
+    dark: false,
+  };
+}
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultData();
+    const parsed = JSON.parse(raw);
+    const d = defaultData();
+    return Object.assign(d, parsed);
+  } catch (e) { return defaultData(); }
+}
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+function uid() { return 'i' + Math.random().toString(36).slice(2, 10); }
+
+/* ---------------- Preview activation gate ---------------- */
+const FREE_CHANGE_LIMIT = 3;
+const ACTIVATION_CODE = 'GTX7-9K4Q-M2WR'; // sellers: replace with your own code and tell buyers in the listing/receipt
+
+function getChangeCount() { return parseInt(localStorage.getItem('gp_changeCount') || '0', 10); }
+function isActivated() { return localStorage.getItem('gp_activated') === 'true'; }
+
+function guardChange() {
+  if (isActivated()) return true;
+  const count = getChangeCount();
+  if (count >= FREE_CHANGE_LIMIT) { showActivationModal(); return false; }
+  localStorage.setItem('gp_changeCount', String(count + 1));
+  refreshActivationStatus();
+  return true;
+}
+
+function showActivationModal() {
+  showModal(`
+    <h3>🔒 Activate Full Version</h3>
+    <p style="color:var(--muted);font-size:14px">You've used your ${FREE_CHANGE_LIMIT} free changes in this preview. Enter your activation code (from your purchase) to unlock unlimited editing.</p>
+    <div class="field"><label>Activation Code</label><input id="activationInput" placeholder="Enter code"></div>
+    <div class="modal-actions">
+      <button class="btn secondary" onclick="closeModal()">Maybe later</button>
+      <button class="btn" onclick="tryActivate()">Activate</button>
+    </div>
+  `);
+}
+function tryActivate() {
+  const code = document.getElementById('activationInput').value.trim();
+  if (code && code.toUpperCase() === ACTIVATION_CODE.toUpperCase()) {
+    localStorage.setItem('gp_activated', 'true');
+    closeModal();
+    refreshActivationStatus();
+    alert('Activated! You now have unlimited editing.');
+  } else {
+    alert('Invalid code. Please check your purchase confirmation.');
+  }
+}
+function refreshActivationStatus() {
+  const el = document.getElementById('activationStatus');
+  if (!el) return;
+  if (isActivated()) {
+    el.innerHTML = '';
+  } else {
+    const left = Math.max(0, FREE_CHANGE_LIMIT - getChangeCount());
+    el.innerHTML = `🔒 Preview mode — ${left} free change${left === 1 ? '' : 's'} left. <a href="#" onclick="showActivationModal();return false;" style="color:var(--accent)">Activate</a>`;
+  }
+}
+
+function syncScheduleTasks() {
+  if (!data.todo) data.todo = [];
+  const existingKeys = new Set(data.todo.filter(t => t.autoKey).map(t => t.autoKey));
+  const validKeys = new Set();
+  (data.schedule || []).forEach(s => {
+    const jobs = [
+      { type: 'sow', date: s.sowDate, verb: 'Sow' },
+      { type: 'transplant', date: s.transplantDate, verb: 'Transplant' },
+      { type: 'harvest', date: s.harvestEstDate, verb: 'Harvest' },
+    ];
+    jobs.forEach(j => {
+      if (!j.date) return;
+      const key = `${s.id}_${j.type}`;
+      validKeys.add(key);
+      if (!existingKeys.has(key)) {
+        data.todo.push({ id: uid(), task: `${j.verb} ${s.crop}`, due: j.date, priority: 'Medium', done: false, autoKey: key });
+      }
+    });
+  });
+  data.todo = data.todo.filter(t => !t.autoKey || validKeys.has(t.autoKey));
+}
+
+function computeCropBreakdown() {
+  const rows = {};
+  const ensure = (name) => rows[name] || (rows[name] = { yield: 0, seedCost: 0, fertCost: 0, expenseCost: 0, revenue: 0 });
+  (data.harvest || []).forEach(h => { if (h.crop) ensure(h.crop).yield += parseFloat(h.qty) || 0; });
+  (data.seeds || []).forEach(s => { if (s.plant) ensure(s.plant).seedCost += parseFloat(s.cost) || 0; });
+  (data.fertilizer || []).forEach(f => { ensure(f.crop || 'General').fertCost += parseFloat(f.cost) || 0; });
+  (data.expenses || []).forEach(e => { ensure(e.crop || 'General').expenseCost += parseFloat(e.cost) || 0; });
+  (data.valorization || []).forEach(v => { if (v.use === 'Sold' && v.crop) ensure(v.crop).revenue += parseFloat(v.value) || 0; });
+  return rows;
+}
+
+function getKnownCrops() {
+  const names = new Set();
+  (data.seeds || []).forEach(i => i.plant && names.add(i.plant));
+  (data.schedule || []).forEach(i => i.crop && names.add(i.crop));
+  (data.harvest || []).forEach(i => i.crop && names.add(i.crop));
+  (data.growth || []).forEach(i => i.plant && names.add(i.plant));
+  (data.seedStarting || []).forEach(i => i.plant && names.add(i.plant));
+  (data.valorization || []).forEach(i => i.crop && names.add(i.crop));
+  return Array.from(names).sort((a,b) => a.localeCompare(b));
+}
+
+/* ---------------- Nav / routing ---------------- */
+let currentSection = 'dashboard';
+
+const COLLAPSIBLE_GROUPS = ['Garden Log', 'Bonus Pages'];
+let collapsedGroups = JSON.parse(localStorage.getItem('gp_collapsedGroups') || '[]');
+
+function buildNav() {
+  const groups = {};
+  SECTIONS.forEach(s => { (groups[s.group] = groups[s.group] || []).push(s); });
+  let html = '';
+  Object.keys(groups).forEach(g => {
+    const collapsible = COLLAPSIBLE_GROUPS.includes(g);
+    const collapsed = collapsible && collapsedGroups.includes(g);
+    if (collapsible) {
+      html += `<div class="nav-group-head" onclick="toggleGroup('${g}')" style="cursor:pointer;display:flex;align-items:center;gap:6px">
+        <span class="chev">${collapsed ? '▸' : '▾'}</span><span>${g}</span>
+      </div>`;
+    } else {
+      html += `<div class="nav-group-head">${g}</div>`;
+    }
+    html += `<div class="nav-group-items" style="${collapsed ? 'display:none' : ''}">`;
+    groups[g].forEach(s => {
+      const count = s.fields ? (data[s.id] ? data[s.id].length : 0) : '';
+      html += `<div class="nav-item ${s.id === currentSection ? 'active' : ''}" onclick="goTo('${s.id}')">
+        <span>${s.icon}</span><span>${s.title}</span>
+        ${count !== '' ? `<span class="count">${count}</span>` : ''}
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  document.getElementById('navList').innerHTML = html;
+}
+
+function toggleGroup(g) {
+  if (collapsedGroups.includes(g)) collapsedGroups = collapsedGroups.filter(x => x !== g);
+  else collapsedGroups.push(g);
+  localStorage.setItem('gp_collapsedGroups', JSON.stringify(collapsedGroups));
+  buildNav();
+}
+
+function goTo(id) {
+  currentSection = id;
+  buildNav();
+  render();
+  if (window.innerWidth <= 780) toggleNav(true);
+}
+
+function toggleNav(forceClose) {
+  const nav = document.getElementById('sideNav');
+  const bd = document.getElementById('backdrop');
+  if (forceClose) { nav.classList.remove('open'); bd.classList.remove('show'); return; }
+  nav.classList.toggle('open');
+  bd.classList.toggle('show');
+}
+
+/* ---------------- Global search ---------------- */
+function onSearchInput() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const box = document.getElementById('searchResults');
+  if (!q) { box.classList.remove('show'); box.innerHTML = ''; return; }
+  const results = [];
+  SECTIONS.filter(s => s.fields).forEach(sec => {
+    (data[sec.id] || []).forEach(item => {
+      const hay = sec.fields.map(f => item[f.key]).filter(v => typeof v === 'string').join(' ').toLowerCase();
+      if (hay.includes(q)) {
+        const titleField = sec.fields.find(f => f.required) || sec.fields[0];
+        results.push({ sec, item, title: item[titleField.key] || '(untitled)' });
+      }
+    });
+  });
+  if (!results.length) {
+    box.innerHTML = `<div class="search-empty">No matches found.</div>`;
+  } else {
+    box.innerHTML = results.slice(0, 30).map(r => `
+      <div class="search-result" onclick="goToSearchResult('${r.sec.id}','${r.item.id}')">
+        <div class="sr-sec">${r.sec.icon} ${r.sec.title}</div>
+        <div class="sr-title">${esc(r.title)}</div>
+      </div>
+    `).join('');
+  }
+  box.classList.add('show');
+}
+function goToSearchResult(sectionId, itemId) {
+  document.getElementById('searchResults').classList.remove('show');
+  document.getElementById('searchInput').value = '';
+  goTo(sectionId);
+  setTimeout(() => openItemModal(sectionId, itemId), 50);
+}
+document.addEventListener('click', (e) => {
+  const box = document.getElementById('searchResults');
+  if (box && !e.target.closest('.search-box')) box.classList.remove('show');
+});
+
+/* ---------------- Render dispatch ---------------- */
+function render() {
+  const sec = SECTIONS.find(s => s.id === currentSection);
+  const main = document.getElementById('main');
+  if (!sec) { main.innerHTML = ''; return; }
+  if (sec.special === 'dashboard') return renderDashboard();
+  if (sec.special === 'layout') return renderLayout();
+  if (sec.special === 'yield') return renderYield();
+  if (sec.special === 'monthly') return renderMonthly();
+  if (sec.special === 'harvestCal') return renderHarvestCal();
+  if (sec.special === 'gallery') return renderGallery();
+  renderTable(sec);
+}
+
+/* ---------------- Dashboard ---------------- */
+function renderDashboard() {
+  const main = document.getElementById('main');
+  const totalHarvest = (data.harvest || []).reduce((a,h) => a + (parseFloat(h.qty) || 0), 0);
+  const totalExpense = (data.expenses || []).reduce((a,e) => a + (parseFloat(e.cost) || 0), 0);
+  const openTodos = (data.todo || []).filter(t => !t.done).length;
+  const bedsCount = data.meta.bedsCount || (data.layout.beds || []).length;
+
+  main.innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2>🌱 Dashboard</h2>
+        <p>Overview of your garden for this season.</p>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="num">${totalHarvest.toFixed(1)} kg</div><div class="lbl">Total Harvest</div></div>
+      <div class="stat-card"><div class="num">${totalExpense.toFixed(2)}</div><div class="lbl">Total Expenses</div></div>
+      <div class="stat-card"><div class="num">${bedsCount || 0}</div><div class="lbl">Beds / Rows</div></div>
+      <div class="stat-card"><div class="num">${openTodos}</div><div class="lbl">Tasks To Do</div></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">This Week</h3>
+      <p style="color:var(--muted);font-size:13px;margin-top:0">Overdue items and anything due in the next 7 days, pulled from Garden To-Do List and Planting Schedule.</p>
+      ${renderThisWeekRows()}
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Season Details</h3>
+      <div class="field-row">
+        <div class="field"><label>Garden Year</label><input id="dYear" value="${esc(data.meta.year)}"></div>
+        <div class="field"><label>Cultivated Area</label><input id="dArea" value="${esc(data.meta.area)}" placeholder="e.g. 45 sqm"></div>
+        <div class="field"><label>Number of Beds/Rows</label><input id="dBeds" value="${esc(data.meta.bedsCount)}" placeholder="e.g. 8"></div>
+      </div>
+      <div class="field goal-box">
+        <label>Season Goals</label>
+        <textarea id="dGoals" placeholder="What do you want to achieve from your garden this year?">${esc(data.meta.goals)}</textarea>
+      </div>
+      <button class="btn" onclick="saveDashboardMeta()">Save</button>
+    </div>
+  `;
+}
+function saveDashboardMeta() {
+  if (!guardChange()) return;
+  data.meta.year = document.getElementById('dYear').value;
+  data.meta.area = document.getElementById('dArea').value;
+  data.meta.bedsCount = document.getElementById('dBeds').value;
+  data.meta.goals = document.getElementById('dGoals').value;
+  save(); buildNav(); render();
+}
+
+/* ---------------- This Week digest ---------------- */
+function computeThisWeek() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const horizon = new Date(today); horizon.setDate(horizon.getDate() + 7);
+  const lookback = new Date(today); lookback.setDate(lookback.getDate() - 14);
+  const items = [];
+  (data.todo || []).forEach(t => {
+    if (t.done || !t.due) return;
+    const d = new Date(t.due); if (isNaN(d)) return;
+    items.push({ icon: '✅', label: t.task, date: d, sectionId: 'todo', itemId: t.id });
+  });
+  (data.schedule || []).forEach(s => {
+    [['sowDate', 'Sow'], ['transplantDate', 'Transplant'], ['harvestEstDate', 'Harvest (est.)']].forEach(([key, verb]) => {
+      if (!s[key]) return;
+      const d = new Date(s[key]); if (isNaN(d)) return;
+      items.push({ icon: '📅', label: `${verb} ${s.crop}`, date: d, sectionId: 'schedule', itemId: s.id });
+    });
+  });
+  return items
+    .filter(i => i.date <= horizon && i.date >= lookback)
+    .sort((a, b) => a.date - b.date)
+    .slice(0, 12)
+    .map(i => {
+      const diffDays = Math.round((i.date - today) / 86400000);
+      return { ...i, overdue: diffDays < 0, today: diffDays === 0, diffDays };
+    });
+}
+function renderThisWeekRows() {
+  const items = computeThisWeek();
+  if (!items.length) return `<p style="color:var(--muted);font-size:13px">Nothing overdue or due in the next 7 days.</p>`;
+  return `<div>${items.map(i => `
+    <div class="week-row ${i.overdue ? 'overdue' : ''} ${i.today ? 'today' : ''}" onclick="goToWeekItem('${i.sectionId}','${i.itemId}')">
+      <span>${i.icon}</span>
+      <span>${esc(i.label)}</span>
+      <span class="wr-date">${i.overdue ? 'Overdue · ' : i.today ? 'Today · ' : ''}${i.date.toISOString().slice(0,10)}</span>
+    </div>
+  `).join('')}</div>`;
+}
+function goToWeekItem(sectionId, itemId) {
+  goTo(sectionId);
+  setTimeout(() => openItemModal(sectionId, itemId), 50);
+}
+
+/* ---------------- Garden Layout ---------------- */
+function renderLayout() {
+  const main = document.getElementById('main');
+  const beds = data.layout.beds || [];
+  const bedWarnings = computeBedWarnings(beds);
+  main.innerHTML = `
+    <div class="page-head">
+      <div><h2>🗺️ Garden Layout</h2><p>Sketch, growing beds, and layout notes.</p></div>
+      <button class="btn" onclick="openBedModal()">+ Add Bed</button>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Garden Sketch</h3>
+      <div class="field"><input type="file" accept="image/*" id="sketchInput" onchange="handleSketchUpload(event)"></div>
+      ${data.layout.sketch ? `<img class="sketch-preview" src="${data.layout.sketch}"><button class="btn secondary small" style="margin-top:10px" onclick="removeSketch()">🗑️ Remove Sketch</button>` : `<p style="color:var(--muted);font-size:13px">Upload a photo or sketch of your crop layout.</p>`}
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Crop Positioning Notes</h3>
+      <div class="field"><textarea id="layoutNotes" placeholder="Note crop rotation, bed orientation, sun exposure, etc. here.">${esc(data.layout.notes)}</textarea></div>
+      <button class="btn secondary small" onclick="saveLayoutNotes()">Save Notes</button>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Bed Dimensions</h3>
+      <p style="color:var(--muted);font-size:13px;margin-top:0">Beds are treated as physically next to each other in this order — Bed 1 neighbors Bed 2, Bed 2 neighbors Bed 3, and so on. Conflicts are checked against the Companion Planting Chart.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Photo</th><th>Bed Name</th><th>Dimensions</th><th>Planned Crop</th><th></th></tr></thead>
+          <tbody>
+            ${beds.length ? beds.map(b => { const warnings = bedWarnings[b.id] || []; return `
+              <tr>
+                <td>${b.photo ? `<img class="thumb" src="${b.photo}">` : ''}</td>
+                <td>${esc(b.name)}</td><td>${esc(b.size)}</td>
+                <td>${esc(b.crop)}${warnings.length ? ` <span style="color:var(--warn);font-weight:600;font-size:12.5px;cursor:help;white-space:nowrap" title="${esc(warnings.join(' | '))}">⚠️ Bad neighbor</span>` : ''}</td>
+                <td class="row-actions">
+                  <button class="icon-btn" onclick="openBedModal('${b.id}')">✏️</button>
+                  <button class="icon-btn del" onclick="deleteBed('${b.id}')">🗑️</button>
+                </td>
+              </tr>`; }).join('') : `<tr><td colspan="5" class="empty">No beds added yet.</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+function computeBedWarnings(beds) {
+  const chart = data.companion || [];
+  const warnings = {};
+  const includesName = (text, name) => !!text && !!name && text.toLowerCase().includes(name.toLowerCase());
+  const flag = (bedId, msg) => (warnings[bedId] = warnings[bedId] || []).push(msg);
+  for (let i = 0; i < beds.length - 1; i++) {
+    const a = beds[i], b = beds[i + 1];
+    if (!a.crop || !b.crop) continue;
+    chart.forEach(c => {
+      if (!c.plant || !c.bad) return;
+      const badNames = c.bad.split(',').map(s => s.trim()).filter(Boolean);
+      if (includesName(a.crop, c.plant)) {
+        badNames.forEach(bad => { if (includesName(b.crop, bad)) {
+          flag(a.id, `${c.plant} should avoid ${bad} — planted in ${b.name || 'the next bed'}`);
+          flag(b.id, `${bad} should avoid ${c.plant} — planted in ${a.name || 'the previous bed'}`);
+        }});
+      }
+      if (includesName(b.crop, c.plant)) {
+        badNames.forEach(bad => { if (includesName(a.crop, bad)) {
+          flag(b.id, `${c.plant} should avoid ${bad} — planted in ${a.name || 'the previous bed'}`);
+          flag(a.id, `${bad} should avoid ${c.plant} — planted in ${b.name || 'the next bed'}`);
+        }});
+      }
+    });
+  }
+  return warnings;
+}
+function handleSketchUpload(e) {
+  const file = e.target.files[0]; if (!file) return;
+  if (!guardChange()) { e.target.value = ''; return; }
+  const reader = new FileReader();
+  reader.onload = () => { data.layout.sketch = reader.result; save(); renderLayout(); };
+  reader.readAsDataURL(file);
+}
+function removeSketch() {
+  if (!guardChange()) return;
+  data.layout.sketch = '';
+  save(); renderLayout();
+}
+function saveLayoutNotes() { if (!guardChange()) return; data.layout.notes = document.getElementById('layoutNotes').value; save(); }
+function openBedModal(id) {
+  const bed = id ? data.layout.beds.find(b => b.id === id) : { name:'', size:'', crop:'', photo:'' };
+  showModal(`
+    <h3>${id ? 'Edit Bed' : 'Add Bed'}</h3>
+    <div class="field"><label>Bed Name</label><input id="bedName" value="${esc(bed.name)}"></div>
+    <div class="field"><label>Dimensions</label><input id="bedSize" value="${esc(bed.size)}" placeholder="e.g. 3m x 1m"></div>
+    <div class="field"><label>Planned Crop</label><input id="bedCrop" value="${esc(bed.crop)}"></div>
+    <div class="field">
+      <label>Photo</label>
+      <input type="file" accept="image/*" id="bedPhotoFile">
+      <input type="hidden" id="bedPhoto" value="${esc(bed.photo || '')}">
+      ${bed.photo ? `<div style="margin-top:8px"><img class="thumb" style="width:70px;height:70px" src="${bed.photo}"><button type="button" class="icon-btn del" onclick="document.getElementById('bedPhoto').value='';this.previousElementSibling.remove();this.remove()">🗑️ Remove</button></div>` : ''}
+    </div>
+    <div class="modal-actions">
+      <button class="btn secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="saveBed('${id||''}')">Save</button>
+    </div>
+  `);
+  document.getElementById('bedPhotoFile').onchange = (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { document.getElementById('bedPhoto').value = reader.result; };
+    reader.readAsDataURL(file);
+  };
+}
+function saveBed(id) {
+  if (!guardChange()) return;
+  const val = { name: document.getElementById('bedName').value, size: document.getElementById('bedSize').value, crop: document.getElementById('bedCrop').value, photo: document.getElementById('bedPhoto').value };
+  if (id) { Object.assign(data.layout.beds.find(b => b.id === id), val); }
+  else { data.layout.beds.push({ id: uid(), ...val }); }
+  save(); closeModal(); renderLayout();
+}
+function deleteBed(id) {
+  if (!guardChange()) return;
+  data.layout.beds = data.layout.beds.filter(b => b.id !== id); save(); renderLayout();
+}
+
+/* ---------------- Generic table sections ---------------- */
+function renderTable(sec) {
+  const main = document.getElementById('main');
+  const items = data[sec.id] || [];
+  const cols = sec.fields.filter(f => f.type !== 'textarea');
+  main.innerHTML = `
+    <div class="page-head">
+      <div><h2>${sec.icon} ${sec.title}</h2></div>
+      <button class="btn" onclick="openItemModal('${sec.id}')">+ Add ${sec.addLabel}</button>
+    </div>
+    <div class="card" style="padding:0">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>${cols.map(f => `<th>${f.label}</th>`).join('')}${sec.fields.some(f=>f.type==='textarea')?'<th>Details</th>':''}<th></th></tr></thead>
+          <tbody>
+            ${items.length ? items.map(it => `
+              <tr>
+                ${cols.map(f => `<td>${renderCell(f, it[f.key], sec, it)}</td>`).join('')}
+                ${sec.fields.some(f=>f.type==='textarea') ? `<td class="top">${sec.fields.filter(f=>f.type==='textarea').map(f=>it[f.key]?`<div><b>${f.label}:</b> ${esc(it[f.key])}</div>`:'').join('')}</td>` : ''}
+                <td class="row-actions">
+                  <button class="icon-btn" onclick="openItemModal('${sec.id}','${it.id}')">✏️</button>
+                  <button class="icon-btn del" onclick="deleteItem('${sec.id}','${it.id}')">🗑️</button>
+                </td>
+              </tr>`).join('') : `<tr><td colspan="${cols.length+2}" class="empty">Nothing added yet. Click "+ Add ${sec.addLabel}".</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+function renderCell(f, val, sec, item) {
+  if (val === undefined || val === null || val === '') return '';
+  if (f.type === 'image') return `<img class="thumb" src="${val}">`;
+  if (f.type === 'checkbox') return val ? '✅' : '—';
+  let out = esc(String(val));
+  if (sec && sec.id === 'schedule' && f.key === 'sowDate') {
+    const frostMD = latestLastFrostMonthDay();
+    const sowDate = new Date(val);
+    if (frostMD && !isNaN(sowDate)) {
+      const sowMD = sowDate.getMonth() * 100 + sowDate.getDate();
+      if (sowMD < frostMD) {
+        out += ` <span style="color:var(--warn);font-weight:600;font-size:12.5px;white-space:nowrap" title="Earlier than the last recorded frost date (any year)">⚠️ Before frost</span>`;
+      }
+    }
+  }
+  return out;
+}
+function latestLastFrostMonthDay() {
+  const mds = (data.frost || []).map(f => f.lastFrost).filter(Boolean).map(d => new Date(d)).filter(d => !isNaN(d))
+    .map(d => d.getMonth() * 100 + d.getDate());
+  if (!mds.length) return null;
+  return Math.max(...mds);
+}
+
+function openItemModal(sectionId, id) {
+  const sec = SECTIONS.find(s => s.id === sectionId);
+  const item = id ? data[sectionId].find(i => i.id === id) : {};
+  let html = `<h3>${id ? 'Edit' : 'Add'} ${sec.addLabel}</h3>`;
+  sec.fields.forEach(f => {
+    const val = item[f.key] !== undefined ? item[f.key] : '';
+    html += `<div class="field">`;
+    if (f.type !== 'checkbox') html += `<label>${f.label}${f.required ? ' *' : ''}</label>`;
+    if (f.type === 'textarea') {
+      html += `<textarea id="f_${f.key}">${esc(val)}</textarea>`;
+    } else if (f.type === 'select') {
+      let opts;
+      if (f.dynamic === 'beds') opts = (data.layout.beds || []).map(b => b.name).filter(Boolean);
+      else if (f.dynamic === 'crops') opts = getKnownCrops();
+      else opts = f.options.slice();
+      if (val && !opts.includes(val)) opts.push(val);
+      html += `<select id="f_${f.key}"><option value="">— None —</option>${opts.map(o => `<option value="${esc(o)}" ${val===o?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
+    } else if (f.type === 'image') {
+      html += `<input type="file" accept="image/*" id="f_${f.key}_file">`;
+      html += `<input type="hidden" id="f_${f.key}" value="${esc(val)}">`;
+      if (val) html += `<img class="thumb" style="width:70px;height:70px;margin-top:8px" src="${val}">`;
+    } else if (f.type === 'checkbox') {
+      html += `<label style="display:flex;align-items:center;gap:8px;font-weight:400;color:var(--text)"><input type="checkbox" id="f_${f.key}" ${val ? 'checked' : ''} style="width:auto"> ${f.label}</label>`;
+    } else {
+      html += `<input type="${f.type}" id="f_${f.key}" value="${esc(val)}">`;
+    }
+    html += `</div>`;
+  });
+  html += `<div class="modal-actions">
+      <button class="btn secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="saveItem('${sectionId}','${id||''}')">Save</button>
+    </div>`;
+  showModal(html);
+  sec.fields.forEach(f => {
+    if (f.type === 'image') {
+      const fileInput = document.getElementById(`f_${f.key}_file`);
+      fileInput.onchange = (e) => {
+        const file = e.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => { document.getElementById(`f_${f.key}`).value = reader.result; };
+        reader.readAsDataURL(file);
+      };
+    }
+  });
+}
+function saveItem(sectionId, id) {
+  const sec = SECTIONS.find(s => s.id === sectionId);
+  const val = { };
+  for (const f of sec.fields) {
+    const el = document.getElementById(`f_${f.key}`);
+    if (f.type === 'checkbox') val[f.key] = el.checked;
+    else val[f.key] = el.value;
+  }
+  const required = sec.fields.find(f => f.required);
+  if (required && !val[required.key]) { alert(`${required.label} is required.`); return; }
+  if (!guardChange()) return;
+  if (!data[sectionId]) data[sectionId] = [];
+  if (id) { Object.assign(data[sectionId].find(i => i.id === id), val); }
+  else { data[sectionId].push({ id: uid(), ...val }); }
+  if (sectionId === 'schedule') syncScheduleTasks();
+  save(); closeModal(); buildNav(); render();
+}
+function deleteItem(sectionId, id) {
+  if (!confirm('Delete this entry?')) return;
+  if (!guardChange()) return;
+  data[sectionId] = data[sectionId].filter(i => i.id !== id);
+  if (sectionId === 'schedule') syncScheduleTasks();
+  save(); buildNav(); render();
+}
+
+/* ---------------- Yield summary ---------------- */
+function renderYield() {
+  const main = document.getElementById('main');
+  const totalYield = (data.harvest || []).reduce((a,h) => a + (parseFloat(h.qty) || 0), 0);
+  const expenseCost = (data.expenses || []).reduce((a,e) => a + (parseFloat(e.cost) || 0), 0);
+  const seedCost = (data.seeds || []).reduce((a,s) => a + (parseFloat(s.cost) || 0), 0);
+  const fertilizerCost = (data.fertilizer || []).reduce((a,f) => a + (parseFloat(f.cost) || 0), 0);
+  const totalCost = expenseCost + seedCost + fertilizerCost;
+  const costPerKg = totalYield > 0 ? (totalCost / totalYield) : 0;
+
+  const valorization = data.valorization || [];
+  const actualRevenue = valorization.filter(v => v.use === 'Sold').reduce((a,v) => a + (parseFloat(v.value) || 0), 0);
+  const actualProfit = actualRevenue - totalCost;
+  const useBreakdown = {};
+  valorization.forEach(v => { useBreakdown[v.use || 'Unspecified'] = (useBreakdown[v.use || 'Unspecified'] || 0) + (parseFloat(v.qty) || 0); });
+  const valorizedQty = Object.values(useBreakdown).reduce((a,b) => a+b, 0);
+  const unaccountedQty = Math.max(0, totalYield - valorizedQty);
+
+  const salePrice = parseFloat(localStorage.getItem('gp_salePrice') || '0') || 0;
+  const projectedRevenue = salePrice * totalYield;
+  const projectedProfit = projectedRevenue - totalCost;
+
+  const cropRows = computeCropBreakdown();
+  const cropNames = Object.keys(cropRows).filter(n => n !== 'General').sort((a,b) => a.localeCompare(b));
+  if (cropRows['General']) cropNames.push('General');
+  const cropTotals = cropNames.reduce((t,n) => {
+    const r = cropRows[n];
+    const cost = r.seedCost + r.fertCost + r.expenseCost;
+    t.yield += r.yield; t.cost += cost; t.revenue += r.revenue;
+    return t;
+  }, { yield: 0, cost: 0, revenue: 0 });
+
+  const byMonth = MONTHS.map(() => 0);
+  (data.harvest || []).forEach(h => {
+    if (!h.date) return;
+    const m = new Date(h.date).getMonth();
+    if (isNaN(m)) return;
+    byMonth[m] += (parseFloat(h.qty) || 0);
+  });
+  const maxVal = Math.max(...byMonth, 1);
+  main.innerHTML = `
+    <div class="page-head"><div><h2>📈 Yield Summary</h2><p>Automatically calculated from Harvest Tracker, Seed Inventory, Fertilizer Log, Garden Expenses, and Produce Valorization.</p></div></div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="num">${totalYield.toFixed(1)} kg</div><div class="lbl">Total Yield</div></div>
+      <div class="stat-card"><div class="num">${totalCost.toFixed(2)}</div><div class="lbl">Total Cost</div></div>
+      <div class="stat-card"><div class="num">${costPerKg.toFixed(2)}</div><div class="lbl">Cost / kg</div></div>
+      <div class="stat-card"><div class="num">${actualRevenue.toFixed(2)}</div><div class="lbl">Actual Revenue (Sold)</div></div>
+      <div class="stat-card"><div class="num">${actualProfit.toFixed(2)}</div><div class="lbl">Actual Profit</div></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Cost Breakdown</h3>
+      <p style="color:var(--muted);font-size:13px;margin-top:0">Automatically pulled from Seed Inventory, Fertilizer Log, and Garden Expenses.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Source</th><th>Cost</th></tr></thead>
+          <tbody>
+            <tr><td>🌾 Seed Inventory</td><td>${seedCost.toFixed(2)}</td></tr>
+            <tr><td>🌿 Fertilizer Log</td><td>${fertilizerCost.toFixed(2)}</td></tr>
+            <tr><td>💰 Garden Expenses</td><td>${expenseCost.toFixed(2)}</td></tr>
+            <tr><td><strong>Total</strong></td><td><strong>${totalCost.toFixed(2)}</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Breakdown by Crop</h3>
+      <p style="color:var(--muted);font-size:13px;margin-top:0">Each crop, then the total. Fertilizer/expense entries without a crop selected fall under "General".</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Crop</th><th>Yield (kg)</th><th>Seed Cost</th><th>Fert. Cost</th><th>Other Exp.</th><th>Total Cost</th><th>Cost/kg</th><th>Revenue (Sold)</th><th>Profit</th></tr></thead>
+          <tbody>
+            ${cropNames.length ? cropNames.map(n => {
+              const r = cropRows[n];
+              const cost = r.seedCost + r.fertCost + r.expenseCost;
+              const perKg = r.yield > 0 ? cost / r.yield : 0;
+              const profit = r.revenue - cost;
+              return `<tr>
+                <td>${n === 'General' ? '— General —' : esc(n)}</td>
+                <td>${r.yield ? r.yield.toFixed(1) : ''}</td>
+                <td>${r.seedCost ? r.seedCost.toFixed(2) : ''}</td>
+                <td>${r.fertCost ? r.fertCost.toFixed(2) : ''}</td>
+                <td>${r.expenseCost ? r.expenseCost.toFixed(2) : ''}</td>
+                <td>${cost.toFixed(2)}</td>
+                <td>${perKg ? perKg.toFixed(2) : ''}</td>
+                <td>${r.revenue ? r.revenue.toFixed(2) : ''}</td>
+                <td>${profit.toFixed(2)}</td>
+              </tr>`;
+            }).join('') : `<tr><td colspan="9" class="empty">No crop data yet — assign crops in Harvest Tracker, Seed Inventory, Fertilizer Log, or Garden Expenses.</td></tr>`}
+            ${cropNames.length ? `<tr>
+              <td><strong>Total</strong></td>
+              <td><strong>${cropTotals.yield.toFixed(1)}</strong></td>
+              <td></td><td></td><td></td>
+              <td><strong>${cropTotals.cost.toFixed(2)}</strong></td>
+              <td><strong>${cropTotals.yield > 0 ? (cropTotals.cost/cropTotals.yield).toFixed(2) : '0.00'}</strong></td>
+              <td><strong>${cropTotals.revenue.toFixed(2)}</strong></td>
+              <td><strong>${(cropTotals.revenue - cropTotals.cost).toFixed(2)}</strong></td>
+            </tr>` : ''}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Monthly Harvest (kg)</h3>
+      <div class="chart-wrap">
+        <div class="bar-chart">
+          ${MONTHS.map((m,i) => `
+            <div class="bar-col">
+              <div class="bar-val">${byMonth[i] ? byMonth[i].toFixed(1) : ''}</div>
+              <div class="bar" style="height:${byMonth[i] ? Math.max(4, (byMonth[i]/maxVal)*140) : 0}px"></div>
+              <div class="bar-lbl">${m.slice(0,3)}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Where the Harvest Went</h3>
+      <p style="color:var(--muted);font-size:13px;margin-top:0">From Produce Valorization entries — ${valorizedQty.toFixed(1)} kg of ${totalYield.toFixed(1)} kg accounted for${unaccountedQty > 0.05 ? `, ${unaccountedQty.toFixed(1)} kg not yet logged` : ''}.</p>
+      ${Object.keys(useBreakdown).length ? `
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Use</th><th>Quantity (kg)</th></tr></thead>
+            <tbody>
+              ${Object.entries(useBreakdown).map(([use, qty]) => `<tr><td>${esc(use)}</td><td>${qty.toFixed(1)}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      ` : `<p style="color:var(--muted);font-size:13px">No entries yet — log some in Produce Valorization.</p>`}
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Projected Sale Price (per kg)</h3>
+      <p style="color:var(--muted);font-size:13px;margin-top:0">Enter a hypothetical market price to estimate revenue and profit if you sold the <em>entire</em> harvest at that price. Projected profit: <strong>${projectedProfit.toFixed(2)}</strong></p>
+      <div class="field"><input type="number" step="0.01" id="salePriceInput" value="${salePrice || ''}" placeholder="e.g. 8.50"></div>
+      <button class="btn" onclick="saveSalePrice()">Recalculate</button>
+    </div>
+  `;
+}
+function saveSalePrice() {
+  localStorage.setItem('gp_salePrice', document.getElementById('salePriceInput').value || '0');
+  renderYield();
+}
+
+/* ---------------- Monthly planner ---------------- */
+function renderMonthly() {
+  const main = document.getElementById('main');
+  main.innerHTML = `
+    <div class="page-head"><div><h2>📆 Monthly Garden Planner</h2><p>Plan your tasks for each month of the year.</p></div></div>
+    <div class="month-grid">
+      ${MONTHS.map(m => `
+        <div class="card month-card">
+          <h4>${m}</h4>
+          <textarea id="m_${m}" onblur="saveMonth('${m}')">${esc(data.monthly[m] || '')}</textarea>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+function saveMonth(m) {
+  if (!guardChange()) { render(); return; }
+  data.monthly[m] = document.getElementById(`m_${m}`).value; save();
+}
+
+/* ---------------- Harvest calendar (computed) ---------------- */
+function renderHarvestCal() {
+  const main = document.getElementById('main');
+  const byMonth = {};
+  (data.harvest || []).forEach(h => {
+    if (!h.date) return;
+    const m = new Date(h.date).getMonth();
+    if (isNaN(m)) return;
+    (byMonth[m] = byMonth[m] || []).push(h);
+  });
+  main.innerHTML = `
+    <div class="page-head"><div><h2>🗓️ Harvest Calendar</h2><p>Monthly view automatically generated from Harvest Tracker.</p></div></div>
+    <div class="month-grid">
+      ${MONTHS.map((m,i) => `
+        <div class="card">
+          <h4 style="margin:0 0 8px;color:var(--accent);font-size:14px">${m}</h4>
+          ${(byMonth[i]||[]).length ? byMonth[i].map(h => `<div style="font-size:13px;margin-bottom:6px">🍅 <b>${esc(h.crop)}</b> — ${h.qty||'?'} kg <span style="color:var(--muted)">(${h.date})</span></div>`).join('') : `<div style="color:var(--muted);font-size:12.5px">No harvest recorded.</div>`}
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+/* ---------------- Photo gallery ---------------- */
+function renderGallery() {
+  const main = document.getElementById('main');
+  const items = [];
+  if (data.layout.sketch) items.push({ photo: data.layout.sketch, label: 'Garden Sketch', date: null, sectionId: 'layout', itemId: null });
+  (data.layout.beds || []).forEach(b => {
+    if (b.photo) items.push({ photo: b.photo, label: b.crop ? `${b.name} — ${b.crop}` : b.name, date: null, sectionId: 'layout', itemId: b.id, isBed: true });
+  });
+  (data.growth || []).forEach(g => {
+    if (g.photo) items.push({ photo: g.photo, label: g.height ? `${g.plant} (${g.height})` : g.plant, date: g.date || null, sectionId: 'growth', itemId: g.id });
+  });
+  const dated = items.filter(i => i.date).sort((a, b) => new Date(a.date) - new Date(b.date));
+  const undated = items.filter(i => !i.date);
+  const sorted = [...dated, ...undated];
+  main.innerHTML = `
+    <div class="page-head"><div><h2>📷 Photo Gallery</h2><p>Every photo from Garden Layout and Plant Growth Tracker, gathered into one visual journal of the season.</p></div></div>
+    ${sorted.length ? `
+      <div class="gallery-grid">
+        ${sorted.map(i => `
+          <div class="gallery-card" ${i.itemId ? `onclick="goToGalleryItem('${i.sectionId}','${i.itemId}',${!!i.isBed})"` : ''}>
+            <img src="${i.photo}">
+            <div class="gc-label">${esc(i.label)}</div>
+            ${i.date ? `<div class="gc-date">${i.date}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    ` : `<p style="color:var(--muted);font-size:13px">No photos yet — upload some in Garden Layout or Plant Growth Tracker.</p>`}
+  `;
+}
+function goToGalleryItem(sectionId, itemId, isBed) {
+  goTo(sectionId);
+  if (isBed === true) setTimeout(() => openBedModal(itemId), 50);
+  else setTimeout(() => openItemModal(sectionId, itemId), 50);
+}
+
+/* ---------------- Modal helpers ---------------- */
+function showModal(html) {
+  document.getElementById('modalBox').innerHTML = html;
+  document.getElementById('overlay').classList.add('show');
+}
+function closeModal() { document.getElementById('overlay').classList.remove('show'); }
+document.getElementById('overlay').addEventListener('click', (e) => { if (e.target.id === 'overlay') closeModal(); });
+
+/* ---------------- Export / Import ---------------- */
+function exportData() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `garden-planner-backup-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+function importData(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      data = Object.assign(defaultData(), parsed);
+      save(); buildNav(); render();
+      alert('Import successful.');
+    } catch (err) { alert('Invalid file.'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+/* ---------------- Dark mode ---------------- */
+function toggleDark() {
+  data.dark = !data.dark;
+  applyDark(); save();
+}
+function applyDark() {
+  document.body.classList.toggle('dark', !!data.dark);
+  document.getElementById('darkBtn').textContent = data.dark ? '☀️' : '🌙';
+}
+
+/* ---------------- Util ---------------- */
+function esc(s) {
+  if (s === undefined || s === null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function updateHeaderDate() {
+  const now = new Date();
+  document.getElementById('headerDate').textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+/* ---------------- Init ---------------- */
+applyDark();
+updateHeaderDate();
+syncScheduleTasks();
+save();
+buildNav();
+render();
+refreshActivationStatus();
+</script>
+</body>
+</html>
