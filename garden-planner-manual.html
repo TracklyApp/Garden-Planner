@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Garden Planner & Tracker — User Manual</title>
+<link rel="icon" type="image/png" href="icon-512.png">
 <style>
   :root{
     --bg:#f7f9f3;
@@ -185,11 +186,18 @@
       <p class="dek">Map out where everything grows.</p>
       <h3>Garden Sketch</h3>
       <p>Upload a photo or drawing of your garden layout with the file picker. It's stored directly in the app — click <span class="ui">🗑️ Remove Sketch</span> underneath the image to delete it.</p>
+      <h3>Garden Bed Map</h3>
+      <p>A visual, top-down layout of your beds, drawn automatically from the dimensions and crop of each one. Click any tile to jump straight to editing that bed.</p>
       <h3>Crop Positioning Notes</h3>
       <p>A free-text box for crop rotation plans, bed orientation, or sun exposure notes. Click <span class="ui">Save Notes</span> after editing.</p>
       <h3>Bed Dimensions</h3>
-      <p>Click <span class="ui">+ Add Bed</span> to record a bed's name, size, planned crop, and an optional photo. Bed names you create here automatically appear as choices in the <strong>Zone</strong> dropdown of the Watering Log.</p>
-      <div class="tip"><span class="ticon">⚠️</span><p><strong>Companion planting check —</strong> Beds are treated as physically next to each other in the order they're listed. If a bed's crop is a bad companion for the crop in the next bed (per your Companion Planting Chart), both rows get a "⚠️ Bad neighbor" badge — hover it to see why.</p></div>
+      <p>Click <span class="ui">+ Add Bed</span> to record a bed's name, plot shape, dimensions, planned crop, and an optional photo. Bed names you create here automatically appear as choices in the <strong>Zone</strong> dropdown of the Watering Log.</p>
+      <ol class="steps">
+        <li>Pick a <strong>Plot Shape</strong> — Rectangle or Square.</li>
+        <li>Enter <strong>Width</strong> and <strong>Length</strong> in meters — for a square, Length copies Width automatically. The <strong>Dimensions</strong> field fills in on its own.</li>
+        <li>These numbers size the bed's tile on the Garden Bed Map, so a long narrow bed actually looks long and narrow.</li>
+      </ol>
+      <div class="tip"><span class="ticon">⚠️</span><p><strong>Companion planting check —</strong> Beds are treated as physically next to each other in the order they're listed. If a bed's crop is a bad companion for the crop in the next bed (per your Companion Planting Chart), both beds are flagged in the <strong>Companion Planting Conflicts</strong> list below the table, with a note explaining why.</p></div>
     </section>
 
     <section id="log">
@@ -278,7 +286,7 @@
     </section>
   </main>
 
-  <footer class="colophon">Garden Planner &amp; Tracker — plain HTML, CSS and JavaScript. Zero dependencies, zero build step.</footer>
+  <footer class="colophon">Garden Planner &amp; Tracker v1.0 — plain HTML, CSS and JavaScript. Zero dependencies, zero build step.</footer>
 </div>
 </body>
 </html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link rel="stylesheet" href="shared.css">
+<style>
+  .wrap { padding: 100px 100px 0; }
+  .title { font-size: 66px; max-width: 1300px; }
+  .row { display:flex; gap: 60px; margin-top: 60px; align-items: flex-start; }
+  .cards { display:grid; grid-template-columns: repeat(2,1fr); gap: 24px; flex: 1; }
+  .shot { flex: 1.15; }
+  .shot .browser-frame { height: 920px; }
+  .shot img { object-fit: cover; object-position: top; height: 858px; }
+</style></head>
+<body>
+  <div class="wrap">
+    <div class="eyebrow">📊 Dashboard</div>
+    <h1 class="title serif">Open the App, See Your <span class="accent">Whole Season</span> Instantly</h1>
+    <div class="row">
+      <div class="cards">
+        <div class="feature-card"><span class="fc-icon">🗓️</span><h3>This Week</h3><p>Overdue tasks and the next 7 days, pulled automatically from your schedule &amp; to-do list.</p></div>
+        <div class="feature-card"><span class="fc-icon">📊</span><h3>Live Stats</h3><p>Total harvest, expenses, beds and open tasks — updated as you go.</p></div>
+        <div class="feature-card"><span class="fc-icon">🎯</span><h3>Season Goals</h3><p>Write down what you want to grow this year and track it.</p></div>
+        <div class="feature-card"><span class="fc-icon">🔍</span><h3>Global Search</h3><p>Find any plant or entry across all 17 sections in one search box.</p></div>
+      </div>
+      <div class="shot">
+        <div class="browser-frame">
+          <div class="browser-bar">
+            <div class="dot" style="background:#ff5f57"></div>
+            <div class="dot" style="background:#febc2e"></div>
+            <div class="dot" style="background:#28c840"></div>
+          </div>
+          <img src="raw/dashboard.png">
+        </div>
+      </div>
+    </div>
+  </div>
+</body></html>

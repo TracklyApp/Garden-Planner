@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Garden Planner &amp; Tracker</title>
+<link rel="icon" type="image/png" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-512.png">
 <style>
   :root {
     --bg: #f3f6ef;
@@ -156,6 +158,25 @@
   .gallery-card .gc-label { padding: 8px 10px 2px; font-size: 12.5px; font-weight: 600; }
   .gallery-card .gc-date { padding: 0 10px 8px; font-size: 11px; color: var(--muted); }
   .sketch-preview { max-width: 100%; border-radius: 10px; border: 1px solid var(--border); margin-top: 10px; display:block; }
+  .bed-map { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 22px; }
+  .bed-tile-wrap { display: flex; flex-direction: column; align-items: center; }
+  .bed-tile {
+    position: relative; border-radius: 8px; cursor: pointer;
+    background: linear-gradient(160deg,#8a6033,#6b4423);
+    box-shadow: var(--shadow), inset 0 0 0 4px rgba(0,0,0,.18), inset 0 2px 6px rgba(0,0,0,.35);
+    border: 1px solid rgba(0,0,0,.3); transition: transform .1s ease; overflow: hidden;
+  }
+  .bed-tile:hover { transform: translateY(-2px); }
+  .bed-tile .bt-grid { position: absolute; inset: 6px; display: grid; place-items: center; }
+  .bed-tile .bt-grid span { font-size: 20px; line-height: 1; filter: drop-shadow(0 1px 1px rgba(0,0,0,.4)); }
+  .bt-label { font-weight: 700; font-size: 13px; margin-top: 8px; color: var(--text); }
+  .bt-crop { font-size: 11px; opacity: .75; color: var(--muted); text-align: center; }
+  .conflict-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 4px; border-bottom: 1px solid var(--border); }
+  .conflict-row:last-child { border-bottom: none; }
+  .conflict-row.ok { align-items: center; }
+  .conflict-icon { font-size: 18px; }
+  .conflict-title { font-weight: 600; font-size: 14px; }
+  .conflict-detail { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
   .goal-box textarea { width:100%; min-height:90px; }
   footer { text-align: center; color: var(--muted); font-size: 12px; padding: 20px; }
   @media (max-width: 780px) {
@@ -266,7 +287,7 @@
 </div>
 
 <footer>
-  Garden Planner &amp; Tracker — your data stays saved locally in this browser (localStorage). Export regularly to keep a backup.
+  Garden Planner &amp; Tracker v1.0 — your data stays saved locally in this browser (localStorage). Export regularly to keep a backup.
   <div id="activationStatus" style="margin-top:6px;font-size:12.5px"></div>
 </footer>
 
@@ -424,7 +445,7 @@ function genImg(emoji, bg1, bg2) {
 }
 
 /* ---------------- Data / storage ---------------- */
-const STORAGE_KEY = 'gardenPlannerData_v10';
+const STORAGE_KEY = 'gardenPlannerData_v11';
 let data = loadData();
 
 function defaultData() {
@@ -432,9 +453,9 @@ function defaultData() {
     meta: { year: new Date().getFullYear().toString(), area: '1,200 sqft', bedsCount: '6', goals: 'Grow enough tomatoes and greens to eat fresh all summer, and try preserving extras for winter.' },
     layout: {
       beds: [
-        { id: uid(), name: 'Bed 1', size: '3m x 1.2m', crop: 'Tomatoes & Basil', photo: genImg('🍅', '#8fc36a', '#4c7a3f') },
-        { id: uid(), name: 'Bed 2', size: '3m x 1.2m', crop: 'Cabbage & Carrots', photo: genImg('🥕', '#e0a94a', '#c98a2c') },
-        { id: uid(), name: 'Bed 3', size: '2m x 1m', crop: 'Lettuce & Spinach', photo: genImg('🥬', '#c8e654', '#8fc36a') },
+        { id: uid(), name: 'Bed 1', size: '3m x 1.2m', shape: 'rectangle', widthM: '3', lengthM: '1.2', crop: 'Tomatoes & Basil', photo: genImg('🍅', '#8fc36a', '#4c7a3f') },
+        { id: uid(), name: 'Bed 2', size: '3m x 1.2m', shape: 'rectangle', widthM: '3', lengthM: '1.2', crop: 'Cabbage & Carrots', photo: genImg('🥕', '#e0a94a', '#c98a2c') },
+        { id: uid(), name: 'Bed 3', size: '1.5m x 1.5m', shape: 'square', widthM: '1.5', lengthM: '1.5', crop: 'Lettuce & Spinach', photo: genImg('🥬', '#c8e654', '#8fc36a') },
       ],
       sketch: '',
       notes: 'Beds 1-2 get full morning sun; Bed 3 is partly shaded by the fence in the afternoon. Rotate nightshades (tomatoes/peppers) to a new bed each year.',
@@ -839,6 +860,21 @@ function renderLayout() {
       ${data.layout.sketch ? `<img class="sketch-preview" src="${data.layout.sketch}"><button class="btn secondary small" style="margin-top:10px" onclick="removeSketch()">🗑️ Remove Sketch</button>` : `<p style="color:var(--muted);font-size:13px">Upload a photo or sketch of your crop layout.</p>`}
     </div>
     <div class="card">
+      <h3 style="margin-top:0">Garden Bed Map</h3>
+      <p style="color:var(--muted);font-size:13px;margin-top:0">A quick visual layout of your beds, in order.</p>
+      <div class="bed-map">
+        ${beds.length ? beds.map((b,i) => `
+          <div class="bed-tile-wrap">
+            <div class="bed-tile" style="${bedTileSize(b)}" onclick="openBedModal('${b.id}')">
+              ${bedPlantGrid(b)}
+            </div>
+            <div class="bt-label">${esc(b.name)}</div>
+            <div class="bt-crop">${esc(b.crop || '—')}</div>
+          </div>
+        `).join('') : `<p style="color:var(--muted);font-size:13px">No beds added yet.</p>`}
+      </div>
+    </div>
+    <div class="card">
       <h3 style="margin-top:0">Crop Positioning Notes</h3>
       <div class="field"><textarea id="layoutNotes" placeholder="Note crop rotation, bed orientation, sun exposure, etc. here.">${esc(data.layout.notes)}</textarea></div>
       <button class="btn secondary small" onclick="saveLayoutNotes()">Save Notes</button>
@@ -850,21 +886,72 @@ function renderLayout() {
         <table>
           <thead><tr><th>Photo</th><th>Bed Name</th><th>Dimensions</th><th>Planned Crop</th><th></th></tr></thead>
           <tbody>
-            ${beds.length ? beds.map(b => { const warnings = bedWarnings[b.id] || []; return `
+            ${beds.length ? beds.map(b => `
               <tr>
                 <td>${b.photo ? `<img class="thumb" src="${b.photo}">` : ''}</td>
                 <td>${esc(b.name)}</td><td>${esc(b.size)}</td>
-                <td>${esc(b.crop)}${warnings.length ? ` <span style="color:var(--warn);font-weight:600;font-size:12.5px;cursor:help;white-space:nowrap" title="${esc(warnings.join(' | '))}">⚠️ Bad neighbor</span>` : ''}</td>
+                <td>${esc(b.crop)}</td>
                 <td class="row-actions">
                   <button class="icon-btn" onclick="openBedModal('${b.id}')">✏️</button>
                   <button class="icon-btn del" onclick="deleteBed('${b.id}')">🗑️</button>
                 </td>
-              </tr>`; }).join('') : `<tr><td colspan="5" class="empty">No beds added yet.</td></tr>`}
+              </tr>`).join('') : `<tr><td colspan="5" class="empty">No beds added yet.</td></tr>`}
           </tbody>
         </table>
       </div>
     </div>
+    <div class="card">
+      <h3 style="margin-top:0">Companion Planting Conflicts</h3>
+      <p style="color:var(--muted);font-size:13px;margin-top:0">Checked automatically between neighboring beds, using your Companion Planting Chart.</p>
+      ${Object.keys(bedWarnings).length ? beds.filter(b => bedWarnings[b.id]).map(b => `
+        <div class="conflict-row">
+          <span class="conflict-icon">⚠️</span>
+          <div>
+            <div class="conflict-title">${esc(b.name)} — ${esc(b.crop)}</div>
+            <div class="conflict-detail">${esc(bedWarnings[b.id].join(' | '))}</div>
+          </div>
+        </div>
+      `).join('') : `<div class="conflict-row ok"><span class="conflict-icon">✅</span><div class="conflict-title">No conflicts between neighboring beds.</div></div>`}
+    </div>
   `;
+}
+function cropEmoji(crop) {
+  const c = (crop || '').toLowerCase();
+  const map = [
+    [['tomato'], '🍅'], [['carrot'], '🥕'], [['lettuce','spinach','greens','salad'], '🥬'],
+    [['basil','herb','mint','parsley'], '🌿'], [['pepper','chili'], '🌶️'], [['bean'], '🫘'],
+    [['onion','garlic'], '🧅'], [['cabbage'], '🥬'], [['squash','zucchini','pumpkin'], '🎃'],
+    [['cucumber'], '🥒'], [['strawberr'], '🍓'], [['potato'], '🥔'], [['corn'], '🌽'], [['flower','marigold'], '🌼'],
+  ];
+  for (const [keys, emoji] of map) if (keys.some(k => c.includes(k))) return emoji;
+  return '🌱';
+}
+function bedTileSize(b) {
+  let w = parseFloat(b.widthM), l = parseFloat(b.lengthM);
+  if (!w || !l) {
+    const m = (b.size || '').match(/([\d.]+)\s*m?\s*x\s*([\d.]+)/i);
+    if (m) { w = parseFloat(m[1]); l = parseFloat(m[2]); }
+  }
+  if (!w || !l) return 'width:150px;height:110px;';
+  const scale = 55;
+  const px = v => Math.max(90, Math.min(340, Math.round(v * scale)));
+  return `width:${px(w)}px;height:${px(l)}px;`;
+}
+function bedTileDims(b) {
+  const style = bedTileSize(b);
+  const w = parseInt((style.match(/width:(\d+)px/) || [])[1]) || 150;
+  const h = parseInt((style.match(/height:(\d+)px/) || [])[1]) || 110;
+  return { w, h };
+}
+function bedPlantGrid(b) {
+  const { w, h } = bedTileDims(b);
+  const cell = 34;
+  const cols = Math.max(2, Math.min(8, Math.round(w / cell)));
+  const rows = Math.max(2, Math.min(8, Math.round(h / cell)));
+  const emoji = cropEmoji(b.crop);
+  let cells = '';
+  for (let i = 0; i < rows * cols; i++) cells += `<span>${emoji}</span>`;
+  return `<div class="bt-grid" style="grid-template-columns:repeat(${cols},1fr);grid-template-rows:repeat(${rows},1fr)">${cells}</div>`;
 }
 function computeBedWarnings(beds) {
   const chart = data.companion || [];
@@ -907,11 +994,23 @@ function removeSketch() {
 }
 function saveLayoutNotes() { if (!guardChange()) return; data.layout.notes = document.getElementById('layoutNotes').value; save(); }
 function openBedModal(id) {
-  const bed = id ? data.layout.beds.find(b => b.id === id) : { name:'', size:'', crop:'', photo:'' };
+  const bed = id ? data.layout.beds.find(b => b.id === id) : { name:'', size:'', crop:'', photo:'', shape:'rectangle', widthM:'', lengthM:'' };
+  const shape = bed.shape || 'rectangle';
   showModal(`
     <h3>${id ? 'Edit Bed' : 'Add Bed'}</h3>
     <div class="field"><label>Bed Name</label><input id="bedName" value="${esc(bed.name)}"></div>
-    <div class="field"><label>Dimensions</label><input id="bedSize" value="${esc(bed.size)}" placeholder="e.g. 3m x 1m"></div>
+    <div class="field">
+      <label>Plot Shape</label>
+      <select id="bedShape" onchange="onBedShapeChange()">
+        <option value="rectangle" ${shape==='rectangle'?'selected':''}>▭ Rectangle</option>
+        <option value="square" ${shape==='square'?'selected':''}>⬜ Square</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Width (m)</label><input type="number" step="0.1" id="bedWidth" value="${esc(bed.widthM || '')}" oninput="onBedDimInput()"></div>
+      <div class="field" id="bedLengthField"><label>Length (m)</label><input type="number" step="0.1" id="bedLength" value="${esc(bed.lengthM || '')}" oninput="onBedDimInput()" ${shape==='square'?'disabled':''}></div>
+    </div>
+    <div class="field"><label>Dimensions (auto)</label><input id="bedSize" value="${esc(bed.size)}" placeholder="e.g. 3m x 1m"></div>
     <div class="field"><label>Planned Crop</label><input id="bedCrop" value="${esc(bed.crop)}"></div>
     <div class="field">
       <label>Photo</label>
@@ -931,9 +1030,25 @@ function openBedModal(id) {
     reader.readAsDataURL(file);
   };
 }
+function onBedShapeChange() {
+  const shape = document.getElementById('bedShape').value;
+  const lengthInput = document.getElementById('bedLength');
+  lengthInput.disabled = shape === 'square';
+  onBedDimInput();
+}
+function onBedDimInput() {
+  const shape = document.getElementById('bedShape').value;
+  const width = document.getElementById('bedWidth').value;
+  const length = shape === 'square' ? width : document.getElementById('bedLength').value;
+  if (shape === 'square') document.getElementById('bedLength').value = width;
+  if (width && length) document.getElementById('bedSize').value = `${width}m x ${length}m`;
+}
 function saveBed(id) {
   if (!guardChange()) return;
-  const val = { name: document.getElementById('bedName').value, size: document.getElementById('bedSize').value, crop: document.getElementById('bedCrop').value, photo: document.getElementById('bedPhoto').value };
+  const shape = document.getElementById('bedShape').value;
+  const widthM = document.getElementById('bedWidth').value;
+  const lengthM = shape === 'square' ? widthM : document.getElementById('bedLength').value;
+  const val = { name: document.getElementById('bedName').value, size: document.getElementById('bedSize').value, crop: document.getElementById('bedCrop').value, photo: document.getElementById('bedPhoto').value, shape, widthM, lengthM };
   if (id) { Object.assign(data.layout.beds.find(b => b.id === id), val); }
   else { data.layout.beds.push({ id: uid(), ...val }); }
   save(); closeModal(); renderLayout();
@@ -1340,10 +1455,14 @@ function updateHeaderDate() {
 }
 
 /* ---------------- Init ---------------- */
+const qs = new URLSearchParams(location.search);
+if (qs.get('dark') === '1') data.dark = true;
 applyDark();
 updateHeaderDate();
 syncScheduleTasks();
 save();
+const deepLinkSection = qs.get('section');
+if (deepLinkSection && SECTIONS.some(s => s.id === deepLinkSection)) currentSection = deepLinkSection;
 buildNav();
 render();
 refreshActivationStatus();

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link rel="stylesheet" href="shared.css">
+<style>
+  .wrap { padding: 90px 100px 0; }
+  .title { font-size: 62px; max-width: 1300px; }
+  .row { display:flex; gap: 50px; margin-top: 56px; }
+  .grid { display:grid; grid-template-columns: repeat(2,1fr); gap: 20px; flex:1; }
+  .feature-card { padding: 24px 26px; }
+  .feature-card h3 { font-size: 22px; }
+  .feature-card p { font-size: 16px; }
+  .fc-icon { font-size: 34px; margin-bottom:8px; }
+  .shot { flex: 1; }
+  .shot .browser-frame { height: 760px; }
+  .shot img { object-fit: cover; object-position: top; height: 698px; }
+  .badge-row { margin-top: 50px; }
+  .badge { font-size: 20px; padding: 14px 22px; }
+</style></head>
+<body>
+  <div class="wrap">
+    <div class="eyebrow">🎁 Bonus Pages</div>
+    <h1 class="title serif">Six Extra Pages, <span class="accent">Ready to Print</span></h1>
+    <div class="row">
+      <div class="grid">
+        <div class="feature-card"><span class="fc-icon">🤝</span><h3>Companion Chart</h3><p>Pre-loaded plant pairings, fully editable.</p></div>
+        <div class="feature-card"><span class="fc-icon">❄️</span><h3>Frost Dates Tracker</h3><p>Last &amp; first frost, per zone.</p></div>
+        <div class="feature-card"><span class="fc-icon">📆</span><h3>Monthly Planner</h3><p>A notes box for all 12 months.</p></div>
+        <div class="feature-card"><span class="fc-icon">🌱</span><h3>Seed Starting Tracker</h3><p>Indoor start &amp; move-out dates.</p></div>
+        <div class="feature-card"><span class="fc-icon">🗓️</span><h3>Harvest Calendar</h3><p>Auto-built from your harvests.</p></div>
+        <div class="feature-card"><span class="fc-icon">📷</span><h3>Photo Gallery</h3><p>Every garden photo, one timeline.</p></div>
+      </div>
+      <div class="shot">
+        <div class="browser-frame">
+          <div class="browser-bar">
+            <div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#febc2e"></div><div class="dot" style="background:#28c840"></div>
+          </div>
+          <img src="raw/companion.png">
+        </div>
+      </div>
+    </div>
+    <div class="badge-row">
+      <div class="badge">📴 Works fully offline</div>
+      <div class="badge">🌙 Dark mode &amp; print-ready</div>
+      <div class="badge">⬇️ Export / import backup</div>
+    </div>
+  </div>
+  <div class="footer-brand">
+    <img src="../icon-512.png">
+    <span>Garden <b>Planner &amp; Tracker</b></span>
+  </div>
+</body></html>
